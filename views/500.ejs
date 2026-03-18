@@ -1,0 +1,13 @@
+<%- include('partials/header') %>
+<div class="d-flex align-items-center justify-content-center min-vh-100">
+  <div class="text-center">
+    <h1 class="display-1 fw-bold text-danger">500</h1>
+    <h2 class="mb-3">Server Error</h2>
+    <p class="text-muted mb-4">Something went wrong on our end. Please try again.</p>
+    <% if (error && error.message) { %>
+      <pre class="text-start bg-light p-3 rounded small mb-4" style="max-width:600px;margin:0 auto"><%= error.message %></pre>
+    <% } %>
+    <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
+  </div>
+</div>
+<%- include('partials/footer') %>

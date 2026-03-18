@@ -1,0 +1,103 @@
+<nav class="navbar navbar-expand-lg navbar-dark nm-navbar">
+  <div class="container-fluid nm-navbar-inner">
+
+    <a class="navbar-brand nm-brand" href="/dashboard">
+      <span class="nm-brand-icon"><i class="bi bi-coin"></i></span>
+      <span class="nm-brand-text"><span class="nm-brand-highlight">Veldt</span>Payroll</span>
+    </a>
+
+    <button class="navbar-toggler nm-toggler" type="button"
+      data-bs-toggle="collapse" data-bs-target="#mainNav"
+      aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+
+      <span class="nm-nav-divider d-none d-lg-flex"></span>
+
+      <ul class="navbar-nav me-auto align-items-lg-center">
+        <li class="nav-item">
+          <a class="nav-link nm-nav-link <%= typeof title !== 'undefined' && title.includes('Dashboard') ? 'active' : '' %>" href="/dashboard">
+            <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nm-nav-link <%= typeof title !== 'undefined' && title.includes('Employee') ? 'active' : '' %>" href="/employees">
+            <i class="bi bi-people"></i><span>Employees</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nm-nav-link <%= typeof path !== 'undefined' && path.startsWith('/payroll') ? 'active' : '' %>" href="/payroll">
+            <i class="bi bi-receipt"></i><span>Payroll</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nm-nav-link <%= typeof title !== 'undefined' && title.includes('Settings') ? 'active' : '' %>" href="/settings">
+            <i class="bi bi-gear"></i><span>Settings</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="nm-user-area">
+
+        <button type="button" 
+                id="helpTooltip"
+                class="nm-icon-btn d-none d-lg-flex border-0 bg-transparent" 
+                data-bs-toggle="tooltip" 
+                data-bs-placement="bottom" 
+                title="Need help? Contact support at support@veldtpayroll.com">
+          <i class="bi bi-question-circle"></i>
+        </button>
+
+        <div class="dropdown">
+          <a class="nm-company-trigger dropdown-toggle" href="#"
+            role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="nm-avatar">
+              <%= user ? user.companyName.charAt(0).toUpperCase() : 'N' %>
+            </span>
+            <span class="nm-company-info d-none d-sm-block">
+              <span class="nm-company-name"><%= user ? user.companyName : '' %></span>
+              <span class="nm-company-sub"><%= user ? user.email : '' %></span>
+            </span>
+            <i class="bi bi-chevron-down nm-chevron d-none d-lg-block"></i>
+          </a>
+
+          <ul class="dropdown-menu dropdown-menu-end nm-dropdown">
+            <li class="nm-dropdown-header">
+              <div class="nm-dh-avatar"><%= user ? user.companyName.charAt(0).toUpperCase() : 'N' %></div>
+              <div>
+                <div class="nm-dh-company"><%= user ? user.companyName : '' %></div>
+                <div class="nm-dh-email"><%= user ? user.email : '' %></div>
+                <span class="nm-status-pill"><span class="nm-status-dot"></span>Active</span>
+              </div>
+            </li>
+            <li><div class="nm-dropdown-sep"></div></li>
+            <li><a href="/settings" class="nm-dd-item"><i class="bi bi-building"></i>Company Settings</a></li>
+            <li><a href="/settings" class="nm-dd-item"><i class="bi bi-person-circle"></i>My Profile</a></li>
+            <li><div class="nm-dropdown-sep"></div></li>
+            <li>
+              <form action="/logout" method="POST">
+                <button type="submit" class="nm-dd-item nm-dd-danger">
+                  <i class="bi bi-box-arrow-right"></i>Sign out
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // Wait for the DOM and Bootstrap to be fully ready
+  document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl, {
+        trigger: 'hover' // Explicitly set trigger to hover
+      })
+    })
+  });
+</script>

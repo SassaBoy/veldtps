@@ -1,0 +1,238 @@
+<%- include('../partials/header') %>
+
+<style>
+  /* ── Portal navbar ────────────────────────────────── */
+  .nm-portal-nav {
+    position:sticky; top:0; z-index:1030;
+    height:62px;
+    background:#0d1b2a;
+    border-bottom:1px solid rgba(255,255,255,0.07);
+    box-shadow:0 4px 24px rgba(0,0,0,0.3);
+  }
+  .nm-portal-nav::before {
+    content:''; position:absolute; inset:0 0 auto 0; height:2px;
+    background:linear-gradient(90deg,transparent,#2563eb 30%,#2563eb 70%,transparent);
+    opacity:0.55;
+  }
+  .nm-portal-nav .container-fluid { height:100%; padding-inline:24px; display:flex; align-items:center; }
+
+  .nm-portal-brand {
+    display:flex; align-items:center; gap:10px; text-decoration:none;
+    font-family:'Sora',sans-serif; font-size:1rem; font-weight:700;
+    color:rgba(255,255,255,0.92);
+  }
+  .nm-portal-brand-icon {
+    width:32px; height:32px; border-radius:8px;
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 2px 8px rgba(96,165,250,0.3);
+  }
+  .nm-portal-brand-icon i { font-size:0.95rem; color:#fff; }
+
+  .nm-portal-right { display:flex; align-items:center; gap:10px; margin-left:auto; }
+  .nm-portal-company { font-size:0.82rem; color:rgba(255,255,255,0.4); }
+
+  .nm-portal-logout {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:7px 14px; border-radius:8px;
+    border:1px solid rgba(255,255,255,0.1); background:transparent;
+    color:rgba(255,255,255,0.65); font-size:0.835rem; font-weight:500;
+    cursor:pointer; transition:background 0.16s,color 0.16s,border-color 0.16s;
+  }
+  .nm-portal-logout:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.92); border-color:rgba(255,255,255,0.18); }
+
+  /* ── Page ─────────────────────────────────────────── */
+  .nm-page-wrapper { flex:1; padding:32px 24px 48px; }
+  .nm-page-inner   { max-width:900px; margin:0 auto; }
+
+  .nm-alert { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:10px; font-size:0.875rem; font-weight:500; margin-bottom:24px; }
+  .nm-alert i { font-size:1rem; flex-shrink:0; margin-top:1px; }
+  .nm-alert-success { background:rgba(46,204,138,0.1); border:1px solid rgba(46,204,138,0.25); color:#2ecc8a; }
+
+  /* ── Welcome header ───────────────────────────────── */
+  .nm-welcome { display:flex; align-items:center; gap:16px; margin-bottom:28px; }
+  .nm-welcome-avatar {
+    width:52px; height:52px; border-radius:14px;
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Sora',sans-serif; font-size:1.3rem; font-weight:700;
+    color:#fff; flex-shrink:0; box-shadow:0 4px 14px rgba(96,165,250,0.3);
+  }
+  .nm-welcome-name { font-family:'Sora',sans-serif; font-size:1.4rem; font-weight:700; color:rgba(255,255,255,0.92); margin:0; letter-spacing:-0.02em; }
+  .nm-welcome-role { font-size:0.875rem; color:rgba(255,255,255,0.4); margin:4px 0 0; }
+
+  /* ── Leave cards ──────────────────────────────────── */
+  .nm-leave-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+  .nm-leave-card {
+    border-radius:14px; padding:20px;
+    border:1px solid rgba(255,255,255,0.07); background:#0d1b2a;
+    display:flex; align-items:center; gap:16px;
+    position:relative; overflow:hidden;
+    transition:transform 0.18s,box-shadow 0.18s;
+  }
+  .nm-leave-card:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,0,0,0.35); }
+  .nm-leave-card::before { content:''; position:absolute; top:-30px; right:-30px; width:90px; height:90px; border-radius:50%; opacity:0.08; }
+  .nm-leave-card.green::before { background:#2ecc8a; }
+  .nm-leave-card.orange::before { background:#f5a623; }
+
+  .nm-leave-icon {
+    width:44px; height:44px; border-radius:11px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:1.15rem;
+  }
+  .nm-leave-card.green  .nm-leave-icon { background:rgba(46,204,138,0.12);  color:#2ecc8a;  border:1px solid rgba(46,204,138,0.2); }
+  .nm-leave-card.orange .nm-leave-icon { background:rgba(245,166,35,0.12);  color:#f5a623;  border:1px solid rgba(245,166,35,0.2); }
+
+  .nm-leave-label { font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:rgba(255,255,255,0.4); margin-bottom:5px; }
+  .nm-leave-value { font-family:'Sora',sans-serif; font-size:1.6rem; font-weight:700; color:rgba(255,255,255,0.92); line-height:1; }
+  .nm-leave-unit  { font-family:'DM Sans',sans-serif; font-size:0.875rem; font-weight:400; color:rgba(255,255,255,0.45); margin-left:5px; }
+
+  /* ── Panel ────────────────────────────────────────── */
+  .nm-panel { background:#0d1b2a; border:1px solid rgba(255,255,255,0.07); border-radius:14px; overflow:hidden; }
+  .nm-panel-header { display:flex; align-items:center; gap:9px; padding:15px 20px; border-bottom:1px solid rgba(255,255,255,0.07); background:#112235; font-family:'Sora',sans-serif; font-size:0.875rem; font-weight:600; color:rgba(255,255,255,0.92); }
+  .nm-panel-icon { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:0.82rem; background:rgba(96,165,250,0.1); color:#60a5fa; border:1px solid rgba(96,165,250,0.15); }
+
+  /* ── Table ────────────────────────────────────────── */
+  .nm-table { width:100%; border-collapse:collapse; font-size:0.865rem; }
+  .nm-table thead tr { border-bottom:1px solid rgba(255,255,255,0.07); }
+  .nm-table thead th { padding:12px 16px; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:rgba(255,255,255,0.35); white-space:nowrap; background:#112235; }
+  .nm-table tbody tr { border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.14s; }
+  .nm-table tbody tr:last-child { border-bottom:none; }
+  .nm-table tbody tr:hover { background:rgba(255,255,255,0.025); }
+  .nm-table td { padding:14px 16px; vertical-align:middle; color:rgba(255,255,255,0.65); }
+
+  .nm-period  { font-family:'Sora',sans-serif; font-weight:700; font-size:0.875rem; color:rgba(255,255,255,0.92); }
+  .nm-money   { font-family:'Sora',sans-serif; font-weight:600; white-space:nowrap; }
+  .nm-money.green  { color:#2ecc8a; }
+  .nm-money.red    { color:#f87171; }
+  .nm-money.orange { color:#f5a623; }
+  .nm-money.plain  { color:rgba(255,255,255,0.88); }
+
+  .nm-pdf-btn { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:7px; border:1px solid rgba(248,113,113,0.25); background:rgba(248,113,113,0.08); color:#f87171; font-size:0.8rem; font-weight:600; text-decoration:none; transition:background 0.14s,border-color 0.14s; }
+  .nm-pdf-btn:hover { background:rgba(248,113,113,0.15); border-color:rgba(248,113,113,0.4); color:#f87171; }
+
+  .nm-empty { text-align:center; padding:56px 24px; color:rgba(255,255,255,0.3); }
+  .nm-empty i { font-size:2.5rem; display:block; margin-bottom:14px; opacity:0.3; }
+  .nm-empty p { font-size:0.9rem; margin:0; }
+
+  .nm-disclaimer { display:flex; align-items:flex-start; gap:10px; background:rgba(245,166,35,0.06); border:1px solid rgba(245,166,35,0.16); border-radius:10px; padding:12px 18px; margin-top:24px; font-size:0.815rem; color:rgba(245,166,35,0.8); line-height:1.5; }
+  .nm-disclaimer i { color:#f5a623; flex-shrink:0; margin-top:1px; }
+
+  @media (max-width:575.98px) {
+    .nm-page-wrapper { padding:20px 16px 40px; }
+    .nm-leave-grid   { grid-template-columns:1fr; }
+    .nm-portal-company { display:none; }
+    .nm-table thead th:nth-child(3),
+    .nm-table td:nth-child(3) { display:none; }
+  }
+</style>
+
+<nav class="nm-portal-nav navbar navbar-dark">
+  <div class="container-fluid">
+    <a class="nm-portal-brand" href="/portal/dashboard">
+      <span class="nm-portal-brand-icon"><i class="bi bi-person-badge"></i></span>
+      Employee Portal
+    </a>
+    <div class="nm-portal-right">
+      <span class="nm-portal-company"><%= employee.companyName || '' %></span>
+      <form action="/portal/logout" method="POST" class="d-inline">
+        <button type="submit" class="nm-portal-logout">
+          <i class="bi bi-box-arrow-right"></i>Logout
+        </button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="nm-page-wrapper">
+  <div class="nm-page-inner">
+
+    <% if (success && success.length > 0) { %>
+      <div class="nm-alert nm-alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span><%= success[0] %></span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+
+    <!-- Welcome header -->
+    <div class="nm-welcome">
+      <div class="nm-welcome-avatar"><%= employee.fullName.charAt(0).toUpperCase() %></div>
+      <div>
+        <h1 class="nm-welcome-name">Welcome, <%= employee.fullName.split(' ')[0] %>!</h1>
+        <p class="nm-welcome-role"><%= employee.position || '' %><%= employee.department ? ' &bull; ' + employee.department : '' %></p>
+      </div>
+    </div>
+
+    <!-- Leave Balance Cards -->
+    <div class="nm-leave-grid">
+      <div class="nm-leave-card green">
+        <div class="nm-leave-icon"><i class="bi bi-calendar-check-fill"></i></div>
+        <div>
+          <div class="nm-leave-label">Annual Leave Balance</div>
+          <div class="nm-leave-value"><%= employee.annualLeaveBalance %><span class="nm-leave-unit">days</span></div>
+        </div>
+      </div>
+      <div class="nm-leave-card orange">
+        <div class="nm-leave-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+        <div>
+          <div class="nm-leave-label">Sick Leave Balance</div>
+          <div class="nm-leave-value"><%= employee.sickLeaveBalance %><span class="nm-leave-unit">days</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payslips -->
+    <div class="nm-panel">
+      <div class="nm-panel-header">
+        <span class="nm-panel-icon"><i class="bi bi-receipt"></i></span>
+        My Payslips
+      </div>
+
+      <% if (myPayslips.length === 0) { %>
+        <div class="nm-empty">
+          <i class="bi bi-inbox"></i>
+          <p>No payslips found yet. Your employer hasn't run payroll yet.</p>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="nm-table">
+            <thead>
+              <tr>
+                <th>Period</th>
+                <th>Gross Pay</th>
+                <th>PAYE</th>
+                <th>SSC</th>
+                <th>Net Pay</th>
+                <th>Download</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% myPayslips.forEach(ps => { %>
+                <tr>
+                  <td><span class="nm-period"><%= moment(`${ps.year}-${String(ps.month).padStart(2,'0')}-01`).format('MMMM YYYY') %></span></td>
+                  <td><span class="nm-money plain">N$ <%= Number(ps.grossPay).toLocaleString('en-NA', {minimumFractionDigits:2}) %></span></td>
+                  <td><span class="nm-money red">N$ <%= Number(ps.paye).toLocaleString('en-NA', {minimumFractionDigits:2}) %></span></td>
+                  <td><span class="nm-money orange">N$ <%= Number(ps.sscEmployee).toLocaleString('en-NA', {minimumFractionDigits:2}) %></span></td>
+                  <td><span class="nm-money green">N$ <%= Number(ps.netPay).toLocaleString('en-NA', {minimumFractionDigits:2}) %></span></td>
+                  <td>
+                    <a href="/portal/payslip/<%= ps.runId %>/<%= ps.payslipId %>/pdf" class="nm-pdf-btn">
+                      <i class="bi bi-file-earmark-pdf"></i>PDF
+                    </a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="nm-disclaimer">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <strong>Disclaimer:</strong> Payroll calculations are for guidance only. Always verify with NamRA and Social Security before final submission.
+    </div>
+
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,250 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<style>
+  .nm-page-wrapper { flex: 1; padding: 32px 24px 48px; }
+  .nm-form-page   { max-width: 860px; margin: 0 auto; }
+
+  .nm-form-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+  .nm-page-title  { font-family: 'Sora', sans-serif; font-size: 1.5rem; font-weight: 700; color: rgba(255,255,255,0.92); margin: 0; letter-spacing: -0.02em; }
+  .nm-page-subtitle { font-size: 0.875rem; color: rgba(255,255,255,0.4); margin: 4px 0 0; }
+
+  .nm-back-btn {
+    width: 38px; height: 38px; border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.07); background: #1a2f45;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.65); font-size: 1rem; text-decoration: none; flex-shrink: 0;
+    transition: background 0.16s, color 0.16s;
+  }
+  .nm-back-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); }
+
+  .nm-btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 20px; border-radius: 9px; background: #f5a623;
+    color: #1a0e00; font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem; font-weight: 600; border: none;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+    transition: background 0.16s, box-shadow 0.16s, transform 0.1s;
+  }
+  .nm-btn-primary:hover { background: #e8981e; color: #1a0e00; box-shadow: 0 4px 16px rgba(245,166,35,0.25); transform: translateY(-1px); }
+  .nm-btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 9px; background: transparent;
+    border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
+    font-size: 0.875rem; font-weight: 500; text-decoration: none;
+    transition: background 0.16s, color 0.16s;
+  }
+  .nm-btn-ghost:hover { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.92); }
+
+  .nm-alert {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; border-radius: 10px;
+    font-size: 0.875rem; font-weight: 500; margin-bottom: 24px;
+  }
+  .nm-alert i { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .nm-alert-danger { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22); color: #f87171; }
+
+  /* Form cards */
+  .nm-form-card { background: #0d1b2a; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+  .nm-form-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    font-family: 'Sora', sans-serif; font-size: 0.875rem; font-weight: 600;
+    color: rgba(255,255,255,0.92); background: #112235;
+  }
+  .nm-form-card-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: #f5a623; font-size: 0.82rem; flex-shrink: 0;
+  }
+  .nm-form-card-body { padding: 20px; }
+
+  /* Form controls */
+  .nm-label { display: block; font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.65); margin-bottom: 7px; letter-spacing: 0.01em; }
+  .nm-required { color: #f5a623; }
+  .nm-input {
+    display: block; width: 100%; padding: 9px 13px;
+    background: #112235; border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px; color: rgba(255,255,255,0.92);
+    font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+    outline: none; transition: border-color 0.16s, box-shadow 0.16s; -webkit-appearance: none;
+  }
+  .nm-input::placeholder { color: rgba(255,255,255,0.3); }
+  .nm-input:focus { border-color: rgba(245,166,35,0.45); box-shadow: 0 0 0 3px rgba(245,166,35,0.08); }
+  .nm-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+
+  .nm-input-prefix-wrap {
+    display: flex; align-items: stretch;
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 8px;
+    overflow: hidden; background: #112235;
+    transition: border-color 0.16s, box-shadow 0.16s;
+  }
+  .nm-input-prefix-wrap:focus-within { border-color: rgba(245,166,35,0.45); box-shadow: 0 0 0 3px rgba(245,166,35,0.08); }
+  .nm-input-prefix {
+    padding: 9px 13px; background: #1a2f45;
+    border-right: 1px solid rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.4); font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+  }
+  .nm-input-prefixed { border: none !important; border-radius: 0 !important; box-shadow: none !important; background: transparent; flex: 1; }
+  .nm-input-prefixed:focus { box-shadow: none !important; }
+
+  .nm-hint { font-size: 0.775rem; color: rgba(255,255,255,0.35); margin-top: 5px; }
+
+  /* Toggle */
+  .nm-toggle-wrap { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; padding: 9px 0; }
+  .nm-toggle-input { display: none; }
+  .nm-toggle-track { width: 44px; height: 24px; border-radius: 12px; background: #1a2f45; border: 1px solid rgba(255,255,255,0.07); position: relative; transition: background 0.2s, border-color 0.2s; flex-shrink: 0; }
+  .nm-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.35); transition: transform 0.2s, background 0.2s; }
+  .nm-toggle-input:checked + .nm-toggle-track { background: rgba(245,166,35,0.2); border-color: rgba(245,166,35,0.4); }
+  .nm-toggle-input:checked + .nm-toggle-track .nm-toggle-thumb { transform: translateX(20px); background: #f5a623; }
+  .nm-toggle-label { font-size: 0.875rem; font-weight: 600; color: rgba(255,255,255,0.65); }
+
+  .nm-form-actions { display: flex; align-items: center; gap: 10px; padding-top: 4px; flex-wrap: wrap; }
+
+  @media (max-width: 767.98px) {
+    .nm-page-wrapper { padding: 20px 16px 40px; }
+    .nm-page-title   { font-size: 1.25rem; }
+    .nm-form-card-body { padding: 16px; }
+    .nm-form-actions { flex-direction: column; align-items: stretch; }
+    .nm-btn-primary, .nm-btn-ghost { justify-content: center; width: 100%; }
+  }
+</style>
+
+<div class="nm-page-wrapper">
+  <div class="nm-form-page">
+
+    <!-- Page header -->
+    <div class="nm-form-header">
+      <a href="/employees" class="nm-back-btn"><i class="bi bi-arrow-left"></i></a>
+      <div>
+        <h1 class="nm-page-title">Edit Employee</h1>
+        <p class="nm-page-subtitle"><%= employee.fullName %></p>
+      </div>
+    </div>
+
+    <!-- Validation errors -->
+    <% if (errors && errors.length > 0) { %>
+      <div class="nm-alert nm-alert-danger">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <div><% errors.forEach(e => { %><div><%= e.msg %></div><% }) %></div>
+      </div>
+    <% } %>
+
+    <form action="/employees/<%= employee._id %>?_method=PUT" method="POST" novalidate>
+
+      <!-- Personal Details -->
+      <div class="nm-form-card">
+        <div class="nm-form-card-header">
+          <span class="nm-form-card-icon"><i class="bi bi-person"></i></span>Personal Details
+        </div>
+        <div class="nm-form-card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="nm-label">Full Name <span class="nm-required">*</span></label>
+              <input type="text" name="fullName" class="nm-input" value="<%= formData.fullName || '' %>" required />
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Namibian ID Number <span class="nm-required">*</span></label>
+              <input type="text" name="idNumber" class="nm-input" value="<%= formData.idNumber || '' %>" required />
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Email Address <span class="nm-required">*</span></label>
+              <input type="email" name="email" class="nm-input" value="<%= formData.email || '' %>" required />
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Phone Number</label>
+              <input type="tel" name="phone" class="nm-input" value="<%= formData.phone || '' %>" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employment Details -->
+      <div class="nm-form-card">
+        <div class="nm-form-card-header">
+          <span class="nm-form-card-icon"><i class="bi bi-briefcase"></i></span>Employment Details
+        </div>
+        <div class="nm-form-card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="nm-label">Position / Job Title</label>
+              <input type="text" name="position" class="nm-input" value="<%= formData.position || '' %>" />
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Department</label>
+              <input type="text" name="department" class="nm-input" value="<%= formData.department || '' %>" />
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Basic Monthly Salary (NAD) <span class="nm-required">*</span></label>
+              <div class="nm-input-prefix-wrap">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="basicSalary" class="nm-input nm-input-prefixed"
+                       step="0.01" min="0" value="<%= formData.basicSalary || '' %>" required />
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Date Joined <span class="nm-required">*</span></label>
+              <input type="date" name="dateJoined" class="nm-input"
+                     value="<%= formData.dateJoined ? new Date(formData.dateJoined).toISOString().split('T')[0] : '' %>" required />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leave Balances -->
+      <div class="nm-form-card">
+        <div class="nm-form-card-header">
+          <span class="nm-form-card-icon"><i class="bi bi-calendar-check"></i></span>Leave Balances
+        </div>
+        <div class="nm-form-card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="nm-label">Annual Leave Balance (days)</label>
+              <input type="number" name="annualLeaveBalance" class="nm-input" min="0"
+                     value="<%= formData.annualLeaveBalance !== undefined ? formData.annualLeaveBalance : 24 %>" />
+            </div>
+            <div class="col-md-6">
+              <label class="nm-label">Sick Leave Balance (days)</label>
+              <input type="number" name="sickLeaveBalance" class="nm-input" min="0"
+                     value="<%= formData.sickLeaveBalance !== undefined ? formData.sickLeaveBalance : 30 %>" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portal Access -->
+      <div class="nm-form-card">
+        <div class="nm-form-card-header">
+          <span class="nm-form-card-icon"><i class="bi bi-person-badge"></i></span>Employee Portal Access
+        </div>
+        <div class="nm-form-card-body">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+              <label class="nm-label">New Portal Password</label>
+              <input type="password" name="portalPassword" class="nm-input"
+                     placeholder="Leave blank to keep existing password" />
+              <div class="nm-hint">Minimum 6 characters.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="nm-toggle-wrap">
+                <input class="nm-toggle-input" type="checkbox" name="portalEnabled"
+                       id="portalEnabled" <%= formData.portalEnabled ? 'checked' : '' %> />
+                <span class="nm-toggle-track"><span class="nm-toggle-thumb"></span></span>
+                <span class="nm-toggle-label">Portal Access Enabled</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nm-form-actions">
+        <button type="submit" class="nm-btn-primary"><i class="bi bi-check-circle"></i>Save Changes</button>
+        <a href="/employees" class="nm-btn-ghost">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,433 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<style>
+  .nm-page-wrapper { flex: 1; padding: 32px 24px 48px; }
+  .nm-page-inner   { max-width: 1280px; margin: 0 auto; }
+
+  /* ── Alerts ───────────────────────────────────────── */
+  .nm-alert {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; border-radius: 10px;
+    font-size: 0.875rem; font-weight: 500; margin-bottom: 24px;
+  }
+  .nm-alert i { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .nm-alert-success { background: rgba(46,204,138,0.1);  border: 1px solid rgba(46,204,138,0.25); color: #2ecc8a; }
+  .nm-alert-danger  { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22); color: #f87171; }
+
+  /* ── Page header ──────────────────────────────────── */
+  .nm-page-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 16px;
+    margin-bottom: 32px; flex-wrap: wrap;
+  }
+  .nm-page-title    { font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 700; color: rgba(255,255,255,0.92); margin: 0; letter-spacing: -0.02em; }
+  .nm-page-subtitle { font-size: 0.875rem; color: rgba(255,255,255,0.4); margin: 5px 0 0; }
+
+  .nm-btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 22px; border-radius: 9px; background: #f5a623;
+    color: #1a0e00; font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem; font-weight: 600; border: none;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+    transition: background 0.16s, box-shadow 0.16s, transform 0.1s;
+  }
+  .nm-btn-primary:hover { background: #e8981e; color: #1a0e00; box-shadow: 0 4px 18px rgba(245,166,35,0.28); transform: translateY(-1px); }
+  .nm-btn-primary:active { transform: translateY(0); }
+
+  /* ── KPI Cards ────────────────────────────────────── */
+  .nm-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+
+  .nm-kpi-card {
+    border-radius: 14px; padding: 20px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: #0d1b2a;
+    display: flex; flex-direction: column; gap: 16px;
+    position: relative; overflow: hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .nm-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
+
+  /* Subtle corner glow per colour */
+  .nm-kpi-card::before {
+    content: ''; position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%; opacity: 0.08;
+  }
+  .nm-kpi-blue::before   { background: #60a5fa; }
+  .nm-kpi-green::before  { background: #2ecc8a; }
+  .nm-kpi-teal::before   { background: #22d3ee; }
+  .nm-kpi-orange::before { background: #f5a623; }
+
+  .nm-kpi-top { display: flex; align-items: center; justify-content: space-between; }
+
+  .nm-kpi-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .nm-kpi-blue   .nm-kpi-icon { background: rgba(96,165,250,0.12);  color: #60a5fa; }
+  .nm-kpi-green  .nm-kpi-icon { background: rgba(46,204,138,0.12);  color: #2ecc8a; }
+  .nm-kpi-teal   .nm-kpi-icon { background: rgba(34,211,238,0.12);  color: #22d3ee; }
+  .nm-kpi-orange .nm-kpi-icon { background: rgba(245,166,35,0.12);  color: #f5a623; }
+
+  .nm-kpi-trend {
+    font-size: 0.72rem; font-weight: 600; padding: 3px 8px;
+    border-radius: 20px; display: flex; align-items: center; gap: 4px;
+  }
+  .nm-kpi-blue   .nm-kpi-trend { background: rgba(96,165,250,0.1);  color: #60a5fa; }
+  .nm-kpi-green  .nm-kpi-trend { background: rgba(46,204,138,0.1);  color: #2ecc8a; }
+  .nm-kpi-teal   .nm-kpi-trend { background: rgba(34,211,238,0.1);  color: #22d3ee; }
+  .nm-kpi-orange .nm-kpi-trend { background: rgba(245,166,35,0.1);  color: #f5a623; }
+
+  .nm-kpi-label {
+    font-size: 0.775rem; font-weight: 500;
+    color: rgba(255,255,255,0.4); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 6px;
+  }
+  .nm-kpi-value {
+    font-family: 'Sora', sans-serif; font-size: 1.55rem;
+    font-weight: 700; color: rgba(255,255,255,0.92);
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .nm-kpi-value .nm-not-run {
+    font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
+    font-weight: 500; color: rgba(255,255,255,0.3);
+  }
+
+  /* ── Bottom section grid ──────────────────────────── */
+  .nm-bottom-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+
+  /* ── Panel card (shared) ──────────────────────────── */
+  .nm-panel {
+    background: #0d1b2a; border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .nm-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: #112235;
+  }
+  .nm-panel-title {
+    display: flex; align-items: center; gap: 9px;
+    font-family: 'Sora', sans-serif; font-size: 0.875rem;
+    font-weight: 600; color: rgba(255,255,255,0.92);
+  }
+  .nm-panel-title-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.82rem;
+  }
+  .nm-panel-title-icon.gold   { background: rgba(245,166,35,0.1);  color: #f5a623; border: 1px solid rgba(245,166,35,0.15); }
+  .nm-panel-title-icon.blue   { background: rgba(96,165,250,0.1);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.15); }
+  .nm-panel-body { padding: 16px; flex: 1; }
+
+  /* ── Quick actions ────────────────────────────────── */
+  .nm-quick-actions { display: flex; flex-direction: column; gap: 8px; }
+
+  .nm-qa-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.07);
+    text-decoration: none; color: rgba(255,255,255,0.75);
+    font-size: 0.875rem; font-weight: 500;
+    transition: background 0.16s, border-color 0.16s, color 0.16s, transform 0.14s;
+  }
+  .nm-qa-item:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.13);
+    color: rgba(255,255,255,0.92);
+    transform: translateX(3px);
+  }
+  .nm-qa-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
+  }
+  .nm-qa-item:nth-child(1) .nm-qa-icon { background: rgba(245,166,35,0.12); color: #f5a623; }
+  .nm-qa-item:nth-child(2) .nm-qa-icon { background: rgba(46,204,138,0.12);  color: #2ecc8a; }
+  .nm-qa-item:nth-child(3) .nm-qa-icon { background: rgba(96,165,250,0.12);  color: #60a5fa; }
+  .nm-qa-item:nth-child(4) .nm-qa-icon { background: rgba(34,211,238,0.12);  color: #22d3ee; }
+  .nm-qa-item:nth-child(5) .nm-qa-icon { background: rgba(167,139,250,0.12); color: #a78bfa; }
+  .nm-qa-chevron { margin-left: auto; font-size: 0.7rem; color: rgba(255,255,255,0.25); }
+
+  /* ── Payroll table ────────────────────────────────── */
+  .nm-table { width: 100%; border-collapse: collapse; font-size: 0.865rem; }
+  .nm-table thead tr  { border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .nm-table thead th  {
+    padding: 12px 16px; font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.35); white-space: nowrap;
+  }
+  .nm-table tbody tr  { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.14s; }
+  .nm-table tbody tr:last-child { border-bottom: none; }
+  .nm-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+  .nm-table td { padding: 13px 16px; vertical-align: middle; color: rgba(255,255,255,0.65); }
+
+  .nm-period-cell { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.875rem; color: rgba(255,255,255,0.88); }
+  .nm-money       { font-family: 'Sora', sans-serif; font-weight: 600; color: rgba(255,255,255,0.88); }
+  .nm-emp-count   { display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: rgba(255,255,255,0.5); }
+
+  .nm-view-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 7px;
+    border: 1px solid rgba(96,165,250,0.25); background: rgba(96,165,250,0.08);
+    color: #60a5fa; font-size: 0.8rem; font-weight: 600;
+    text-decoration: none; transition: background 0.14s, border-color 0.14s;
+  }
+  .nm-view-btn:hover { background: rgba(96,165,250,0.15); border-color: rgba(96,165,250,0.4); color: #60a5fa; }
+
+  .nm-view-all-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 7px;
+    border: 1px solid rgba(255,255,255,0.1); background: transparent;
+    color: rgba(255,255,255,0.55); font-size: 0.8rem; font-weight: 500;
+    text-decoration: none; transition: background 0.14s, color 0.14s;
+  }
+  .nm-view-all-btn:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.88); }
+
+  /* Empty state */
+  .nm-empty {
+    text-align: center; padding: 48px 24px;
+    color: rgba(255,255,255,0.3);
+  }
+  .nm-empty i { font-size: 2.2rem; display: block; margin-bottom: 14px; opacity: 0.3; }
+  .nm-empty p { font-size: 0.875rem; margin-bottom: 16px; }
+  .nm-empty a { color: #f5a623; text-decoration: none; font-weight: 500; }
+  .nm-empty a:hover { text-decoration: underline; }
+
+  /* ── Disclaimer ───────────────────────────────────── */
+  .nm-disclaimer {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(245,166,35,0.06); border: 1px solid rgba(245,166,35,0.16);
+    border-radius: 10px; padding: 12px 18px; margin-top: 24px;
+    font-size: 0.815rem; color: rgba(245,166,35,0.8); line-height: 1.5;
+  }
+  .nm-disclaimer i { font-size: 0.95rem; flex-shrink: 0; margin-top: 1px; color: #f5a623; }
+
+  /* ── Responsive ───────────────────────────────────── */
+  @media (max-width: 1199.98px) {
+    .nm-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 991.98px) {
+    .nm-bottom-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 575.98px) {
+    .nm-page-wrapper { padding: 20px 16px 40px; }
+    .nm-kpi-grid     { grid-template-columns: 1fr; }
+    .nm-page-title   { font-size: 1.3rem; }
+    .nm-kpi-value    { font-size: 1.3rem; }
+    .nm-table thead th:nth-child(4),
+    .nm-table td:nth-child(4) { display: none; }
+  }
+</style>
+
+<div class="nm-page-wrapper">
+  <div class="nm-page-inner">
+
+    <!-- Flash messages -->
+    <% if (success && success.length > 0) { %>
+      <div class="nm-alert nm-alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i>
+        <span><%= success[0] %></span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+    <% if (error && error.length > 0) { %>
+      <div class="nm-alert nm-alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span><%= error[0] %></span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+      </div>
+    <% } %>
+
+    <!-- Page header -->
+    <div class="nm-page-header">
+      <div>
+        <h1 class="nm-page-title">Dashboard</h1>
+        <p class="nm-page-subtitle"><%= currentMonth %> &mdash; <%= user.companyName %></p>
+      </div>
+      <a href="/payroll/run" class="nm-btn-primary">
+        <i class="bi bi-play-circle-fill"></i>Run Payroll
+      </a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="nm-kpi-grid">
+
+      <!-- Active Employees -->
+      <div class="nm-kpi-card nm-kpi-blue">
+        <div class="nm-kpi-top">
+          <span class="nm-kpi-icon"><i class="bi bi-people-fill"></i></span>
+          <span class="nm-kpi-trend"><i class="bi bi-building"></i>Staff</span>
+        </div>
+        <div>
+          <div class="nm-kpi-label">Active Employees</div>
+          <div class="nm-kpi-value"><%= employeeCount %></div>
+        </div>
+      </div>
+
+      <!-- Gross Pay -->
+      <div class="nm-kpi-card nm-kpi-green">
+        <div class="nm-kpi-top">
+          <span class="nm-kpi-icon"><i class="bi bi-cash-stack"></i></span>
+          <span class="nm-kpi-trend"><i class="bi bi-calendar3"></i>This month</span>
+        </div>
+        <div>
+          <div class="nm-kpi-label">Gross Payroll</div>
+          <div class="nm-kpi-value">
+            <% if (currentPayroll) { %>
+              N$&nbsp;<%= currentPayroll.totalGrossPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+            <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Pay -->
+      <div class="nm-kpi-card nm-kpi-teal">
+        <div class="nm-kpi-top">
+          <span class="nm-kpi-icon"><i class="bi bi-bank2"></i></span>
+          <span class="nm-kpi-trend"><i class="bi bi-arrow-down-circle"></i>Net</span>
+        </div>
+        <div>
+          <div class="nm-kpi-label">Total Net Pay</div>
+          <div class="nm-kpi-value">
+            <% if (currentPayroll) { %>
+              N$&nbsp;<%= currentPayroll.totalNetPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+            <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAYE -->
+      <div class="nm-kpi-card nm-kpi-orange">
+        <div class="nm-kpi-top">
+          <span class="nm-kpi-icon"><i class="bi bi-clipboard2-check"></i></span>
+          <span class="nm-kpi-trend"><i class="bi bi-receipt"></i>Tax</span>
+        </div>
+        <div>
+          <div class="nm-kpi-label">Total PAYE</div>
+          <div class="nm-kpi-value">
+            <% if (currentPayroll) { %>
+              N$&nbsp;<%= currentPayroll.totalPAYE.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+            <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /nm-kpi-grid -->
+
+    <!-- Bottom section -->
+    <div class="nm-bottom-grid">
+
+      <!-- Quick Actions -->
+      <div class="nm-panel">
+        <div class="nm-panel-header">
+          <div class="nm-panel-title">
+            <span class="nm-panel-title-icon gold"><i class="bi bi-lightning-charge-fill"></i></span>
+            Quick Actions
+          </div>
+        </div>
+        <div class="nm-panel-body">
+          <div class="nm-quick-actions">
+            <a href="/payroll/run" class="nm-qa-item">
+              <span class="nm-qa-icon"><i class="bi bi-play-circle-fill"></i></span>
+              Run Monthly Payroll
+              <i class="bi bi-chevron-right nm-qa-chevron"></i>
+            </a>
+            <a href="/employees/new" class="nm-qa-item">
+              <span class="nm-qa-icon"><i class="bi bi-person-plus-fill"></i></span>
+              Add Employee
+              <i class="bi bi-chevron-right nm-qa-chevron"></i>
+            </a>
+            <a href="/employees" class="nm-qa-item">
+              <span class="nm-qa-icon"><i class="bi bi-people-fill"></i></span>
+              Manage Employees
+              <i class="bi bi-chevron-right nm-qa-chevron"></i>
+            </a>
+            <a href="/payroll" class="nm-qa-item">
+              <span class="nm-qa-icon"><i class="bi bi-clock-history"></i></span>
+              Payroll History
+              <i class="bi bi-chevron-right nm-qa-chevron"></i>
+            </a>
+            <a href="/settings" class="nm-qa-item">
+              <span class="nm-qa-icon"><i class="bi bi-gear-fill"></i></span>
+              Settings
+              <i class="bi bi-chevron-right nm-qa-chevron"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Payroll Runs -->
+      <div class="nm-panel">
+        <div class="nm-panel-header">
+          <div class="nm-panel-title">
+            <span class="nm-panel-title-icon blue"><i class="bi bi-clock-history"></i></span>
+            Recent Payroll Runs
+          </div>
+          <a href="/payroll" class="nm-view-all-btn">
+            View All <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+        <div>
+          <% if (recentPayrolls.length === 0) { %>
+            <div class="nm-empty">
+              <i class="bi bi-inbox"></i>
+              <p>No payroll runs yet.</p>
+              <a href="/payroll/run">Run your first payroll &rarr;</a>
+            </div>
+          <% } else { %>
+            <div class="table-responsive">
+              <table class="nm-table">
+                <thead>
+                  <tr>
+                    <th>Period</th>
+                    <th>Employees</th>
+                    <th>Net Pay</th>
+                    <th>PAYE</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% recentPayrolls.forEach(run => { %>
+                    <tr>
+                      <td>
+                        <span class="nm-period-cell">
+                          <%= moment(`${run.year}-${String(run.month).padStart(2,'0')}-01`).format('MMMM YYYY') %>
+                        </span>
+                      </td>
+                      <td>
+                        <span class="nm-emp-count">
+                          <i class="bi bi-people"></i><%= run.employeeCount %>
+                        </span>
+                      </td>
+                      <td><span class="nm-money">N$ <%= run.totalNetPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %></span></td>
+                      <td><span class="nm-money">N$ <%= run.totalPAYE.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %></span></td>
+                      <td>
+                        <a href="/payroll/<%= run._id %>" class="nm-view-btn">
+                          View <i class="bi bi-arrow-right"></i>
+                        </a>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </div>
+
+    </div><!-- /nm-bottom-grid -->
+
+    <!-- Disclaimer -->
+    <div class="nm-disclaimer">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span><strong>Disclaimer:</strong> Payroll calculations are for guidance only. Always verify with NamRA and Social Security before final submission.</span>
+    </div>
+
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
