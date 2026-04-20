@@ -1,28 +1,8 @@
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const Settings = require('../models/Settings');
-const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-
-// Nodemailer transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-// ─────────────────────────────────────────────
-// HELPER: Send email with a timeout (non-blocking)
-// ─────────────────────────────────────────────
-function sendMailWithTimeout(mailOptions, timeoutMs = 8000) {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Email send timeout')), timeoutMs)
-  );
-  return Promise.race([transporter.sendMail(mailOptions), timeoutPromise])
-    .catch(err => console.error('Background email error:', err.message));
-}
+const { sendMailWithTimeout } = require('../config/mailer');
 
 // ─────────────────────────────────────────────
 // SHARED EMAIL STYLES
@@ -68,7 +48,6 @@ const emailStyles = `
     box-shadow: 0 4px 16px rgba(245,166,35,0.35);
   }
 
-  /* Styling for the coin icon character to look like bi-coin */
   .header-logo-wrap .coin-icon {
     color: #fff;
     font-size: 24px;
@@ -158,7 +137,7 @@ const emailStyles = `
 // ─────────────────────────────────────────────
 function buildVerificationEmail({ to, firstName, companyName, verifyUrl, baseUrl }) {
   return {
-    from: `"Veldt Payroll" <${process.env.EMAIL_USER}>`,
+    from: 'Veldt Payroll <onboarding@resend.dev>',
     to,
     subject: `Verify your Veldt Payroll account`,
     html: `
@@ -215,7 +194,7 @@ function buildVerificationEmail({ to, firstName, companyName, verifyUrl, baseUrl
 // ─────────────────────────────────────────────
 function buildPasswordResetEmail({ to, resetUrl, baseUrl }) {
   return {
-    from: `"Veldt Payroll Support" <${process.env.EMAIL_USER}>`,
+    from: 'Veldt Payroll <onboarding@resend.dev>',
     to,
     subject: `Reset your Veldt Payroll password`,
     html: `

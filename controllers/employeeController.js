@@ -1,29 +1,12 @@
 const { validationResult } = require('express-validator');
 const Employee = require('../models/Employee');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
 const fs = require('fs');
 const csv = require('csv-parser');
 const XLSX = require('xlsx');
+const { sendMailWithTimeout } = require('../config/mailer');
 
-// ─── Email transporter ────────────────────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-function sendMailWithTimeout(mailOptions, timeoutMs = 8000) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Email send timeout')), timeoutMs)
-  );
-  return Promise.race([transporter.sendMail(mailOptions), timeout])
-    .catch(err => console.error('Background email error:', err.message));
-}
-
-// ─── Shared email styles (Matching AuthController) ─────────────────────────────
+// ─── Shared email styles ──────────────────────────────────────────────────────
 const emailStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -57,7 +40,7 @@ const emailStyles = `
 
 function buildEmployeeWelcomeEmail({ to, fullName, companyName, email, verifyUrl, portalUrl, baseUrl }) {
   return {
-    from: `"Veldt Payroll" <${process.env.EMAIL_USER}>`,
+    from: 'Veldt Payroll <onboarding@resend.dev>',
     to,
     subject: `You've been added to ${companyName} on Veldt Payroll`,
     html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
@@ -98,11 +81,8 @@ function buildEmployeeWelcomeEmail({ to, fullName, companyName, email, verifyUrl
   };
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Normalize phone numbers to +264 format
- */
 function normalisePhone(raw) {
   if (!raw) return '';
   let p = raw.toString().trim().replace(/[\s\-()]/g, '');
@@ -112,72 +92,45 @@ function normalisePhone(raw) {
   return '+264' + p;
 }
 
-/**
- * ENHANCED: Field matcher for CSV imports
- * Maps various column name formats to field names
- * Handles: spaces, dashes, underscores, abbreviations, full names
- */
 function getFieldValue(row, possibleNames) {
   const keys = Object.keys(row);
-  
-  // Normalise row keys: lowercase, remove spaces/underscores/dashes, trim whitespace
   const normalisedKeys = {};
   keys.forEach(k => {
     const normalised = k.toLowerCase().trim().replace(/[\s_\-\.]/g, '');
     normalisedKeys[normalised] = k;
   });
-
-  // Normalise each possible name variant
   const normalisedPossibleNames = possibleNames.map(p => 
     p.toLowerCase().trim().replace(/[\s_\-\.]/g, '')
   );
-
-  // Find first match
   for (const normPossible of normalisedPossibleNames) {
     if (normalisedKeys[normPossible]) {
       const actualKey = normalisedKeys[normPossible];
       const value = row[actualKey];
-      // Return null for empty strings, undefined, or 'none'
       return (value === '' || value === undefined || value?.toString().toLowerCase() === 'none') 
         ? null 
         : value;
     }
   }
-  
   return null;
 }
 
-/**
- * Parse date flexibly (handles DD/MM/YYYY, YYYY-MM-DD, etc.)
- */
 function parseDate(dateStr) {
   if (!dateStr) return new Date();
-  
   const str = dateStr.toString().trim();
-  
-  // Try YYYY-MM-DD
-  if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
-    return new Date(str);
-  }
-  
-  // Try DD/MM/YYYY
+  if (str.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(str);
   if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
     const [day, month, year] = str.split('/').map(Number);
     return new Date(year, month - 1, day);
   }
-  
-  // Try MM/DD/YYYY
   if (str.match(/^\d{2}\/\d{2}\/\d{4}/)) {
     const [month, day, year] = str.split('/').map(Number);
     return new Date(year, month - 1, day);
   }
-  
-  // Fallback to Date.parse
   const parsed = new Date(str);
   return isNaN(parsed.getTime()) ? new Date() : parsed;
 }
 
-// ─── GET /employees ──────────────────────────────────────────────────────────
+// ─── GET /employees ───────────────────────────────────────────────────────────
 exports.getEmployees = async (req, res) => {
   try {
     const companyId = req.session.user._id;
@@ -202,7 +155,7 @@ exports.getEmployees = async (req, res) => {
   }
 };
 
-// ─── GET /employees/new ──────────────────────────────────────────────────────
+// ─── GET /employees/new ───────────────────────────────────────────────────────
 exports.getNewEmployee = async (req, res) => {
   try {
     const employees = await Employee.find(
@@ -222,7 +175,7 @@ exports.getNewEmployee = async (req, res) => {
   }
 };
 
-// ─── POST /employees ─────────────────────────────────────────────────────────
+// ─── POST /employees ──────────────────────────────────────────────────────────
 exports.createEmployee = async (req, res) => {
   const companyId = req.session.user._id;
   const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -241,7 +194,6 @@ exports.createEmployee = async (req, res) => {
   try {
     const companyName = req.session.user.companyName || 'Veldt Payroll Client';
 
-    // Trial plan limit
     const Subscription = require('../models/Subscription');
     const subscription = await Subscription.findOne({ company: companyId });
     if ((subscription?.plan ?? 'trial') === 'trial') {
@@ -267,7 +219,6 @@ exports.createEmployee = async (req, res) => {
       portalPassword
     } = req.body;
 
-    // Duplicate checks
     const dupId = await Employee.findOne({ company: companyId, idNumber: idNumber.trim(), isActive: true });
     if (dupId) {
       return res.render('employees/new', {
@@ -302,43 +253,29 @@ exports.createEmployee = async (req, res) => {
       department: department?.trim() || '',
       basicSalary: parseFloat(basicSalary) || 0,
       dateJoined: new Date(dateJoined),
-      
-      // Leave
       annualLeaveBalance: parseInt(annualLeaveBalance) || 24,
       sickLeaveBalance: parseInt(sickLeaveBalance) || 30,
-
-      // Pension & Funds (NamRA s17)
       pensionFundName: pensionFundName?.trim() || '',
       pensionFundRegNo: pensionFundRegNo?.trim() || '',
       pensionContribution: parseFloat(pensionContribution) || 0,
-
       providentFundName: providentFundName?.trim() || '',
       providentFundRegNo: providentFundRegNo?.trim() || '',
       providentFundContribution: parseFloat(providentFundContribution) || 0,
-
       retirementFundName: retirementFundName?.trim() || '',
       retirementFundRegNo: retirementFundRegNo?.trim() || '',
       retirementFundContribution: parseFloat(retirementFundContribution) || 0,
-
       studyPolicyName: studyPolicyName?.trim() || '',
       studyPolicyRegNo: studyPolicyRegNo?.trim() || '',
       studyPolicyContribution: parseFloat(studyPolicyContribution) || 0,
-
-      // Medical Aid
       medicalAidFundName: medicalAidFundName?.trim() || '',
       medicalAidMemberNo: medicalAidMemberNo?.trim() || '',
       medicalAidContribution: parseFloat(medicalAidContribution) || 0,
-
-      // Fringe Benefits
       hasCompanyVehicle: hasCompanyVehicle === 'on' || hasCompanyVehicle === true || hasCompanyVehicle === 'true',
       housingType: ['none', 'free', 'subsidised'].includes(housingType) ? housingType : 'none',
-
-      // Banking
       bankName: bankName?.trim() || '',
       bankAccountNumber: bankAccountNumber?.trim() || '',
       bankBranchCode: bankBranchCode?.trim() || '',
       accountType: accountType?.trim() || '',
-
       verificationToken,
       emailVerified: false
     };
@@ -372,7 +309,7 @@ exports.createEmployee = async (req, res) => {
   }
 };
 
-// ─── Import Employees (CSV & XLSX) ──────────────────────────────────────────
+// ─── Import Employees (CSV & XLSX) ───────────────────────────────────────────
 exports.importEmployees = async (req, res) => {
   if (!req.file) {
     req.flash('error', 'Please upload a CSV or Excel file.');
@@ -386,7 +323,6 @@ exports.importEmployees = async (req, res) => {
   let results = [];
 
   try {
-    // 1. Parse File Content
     if (req.file.mimetype === 'text/csv' || req.file.originalname.endsWith('.csv')) {
       await new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
@@ -396,7 +332,6 @@ exports.importEmployees = async (req, res) => {
           .on('error', reject);
       });
     } else {
-      // XLSX parsing
       const workbook = XLSX.readFile(filePath, { cellDates: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
@@ -411,101 +346,62 @@ exports.importEmployees = async (req, res) => {
     const subscription = await Subscription.findOne({ company: companyId });
     const plan = subscription?.plan ?? 'trial';
 
-    let currentCount = await Employee.countDocuments({
-      company: companyId,
-      isActive: true
-    });
+    let currentCount = await Employee.countDocuments({ company: companyId, isActive: true });
 
-    // 2. Process Records
     for (const row of results) {
       try {
-        // Trial limit check
-        if (plan === 'trial' && currentCount >= 3) {
-          skipCount++;
-          continue;
-        }
+        if (plan === 'trial' && currentCount >= 3) { skipCount++; continue; }
 
-        // Extract with flexible field matching
         const rawEmail = getFieldValue(row, ['email', 'emailaddress', 'e-mail', 'email address']);
         const email = rawEmail?.toString().toLowerCase().trim();
-        
         const rawId = getFieldValue(row, ['idnumber', 'id', 'identity number', 'namibianid', 'id number']);
         const idNumber = rawId?.toString().trim();
 
-        // Skip rows with missing critical fields
-        if (!email || !idNumber) {
-          skipCount++;
-          continue;
-        }
+        if (!email || !idNumber) { skipCount++; continue; }
 
-        // Check for existing employee
         const existing = await Employee.findOne({ 
           company: companyId, 
           $or: [{ email }, { idNumber }], 
           isActive: true 
         });
-
-        if (existing) {
-          skipCount++;
-          continue;
-        }
+        if (existing) { skipCount++; continue; }
 
         const verificationToken = crypto.randomBytes(32).toString('hex');
 
-        // Build employee data with comprehensive field mapping
         const employeeData = {
           company: companyId,
-          
-          // ══ Personal Details ═══════════════════════════════════════════════
           fullName: (getFieldValue(row, ['fullname', 'full name', 'name', 'employeename', 'employee name']) || '').toString().trim(),
           idNumber,
           tinNumber: getFieldValue(row, ['tinnumber', 'tin', 'tax number', 'taxpayerid', 'taxid'])?.toString().trim() || undefined,
           socialSecurityNumber: getFieldValue(row, ['socialsecuritynumber', 'ssc', 'sscnumber', 'ssn', 'social security'])?.toString().trim() || undefined,
           phone: normalisePhone(getFieldValue(row, ['phone', 'phonenumber', 'mobile', 'cell', 'cellphone'])),
           email,
-
-          // ══ Employment Details ═════════════════════════════════════════════
           position: (getFieldValue(row, ['position', 'jobtitle', 'job title', 'designation', 'title']) || '').toString().trim(),
           department: (getFieldValue(row, ['department', 'dept', 'division']) || '').toString().trim(),
           basicSalary: parseFloat(getFieldValue(row, ['basicsalary', 'basic salary', 'salary', 'monthlysalary', 'monthly salary'])) || 0,
           dateJoined: parseDate(getFieldValue(row, ['datejoined', 'date joined', 'joiningdate', 'hiring date', 'hiringdate', 'startdate', 'start date'])),
-
-          // ══ Leave Balances ═════════════════════════════════════════════════
           annualLeaveBalance: parseInt(getFieldValue(row, ['annualleaveebalance', 'annualleavbalance', 'annual leave', 'annualleave', 'annual leave balance'])) || 24,
           sickLeaveBalance: parseInt(getFieldValue(row, ['sickleavbalance', 'sickleavebalance', 'sick leave', 'sickleave', 'sick leave balance'])) || 30,
-
-          // ══ PENSION FUND (NamRA s17) ═══════════════════════════════════════
           pensionFundName: (getFieldValue(row, ['pensionfundname', 'pension fund name', 'pension fund', 'pensionfund']) || '').toString().trim(),
           pensionFundRegNo: (getFieldValue(row, ['pensionfundregno', 'pension fund reg no', 'pension reg no', 'pension registration', 'pensionfundregistration']) || '').toString().trim(),
           pensionContribution: parseFloat(getFieldValue(row, ['pensioncontribution', 'pension contribution', 'pension amount', 'monthlypension', 'monthly pension', 'pension contrib', 'pension cont'])) || 0,
-
-          // ══ PROVIDENT FUND (NEW - NamRA s17) ═══════════════════════════════
           providentFundName: (getFieldValue(row, ['providentfundname', 'provident fund name', 'provident fund', 'providentfund']) || '').toString().trim(),
           providentFundRegNo: (getFieldValue(row, ['providentfundregno', 'provident fund reg no', 'provident reg no', 'providentregistration']) || '').toString().trim(),
           providentFundContribution: parseFloat(getFieldValue(row, ['providentfundcontribution', 'provident contribution', 'provident amount', 'monthlyprovident', 'provident contrib', 'provident cont'])) || 0,
-
-          // ══ RETIREMENT FUND (NEW - NamRA s17) ══════════════════════════════
           retirementFundName: (getFieldValue(row, ['retirementfundname', 'retirement fund name', 'retirement fund', 'retirementfund', 'raname', 'ra fund']) || '').toString().trim(),
           retirementFundRegNo: (getFieldValue(row, ['retirementfundregno', 'retirement fund reg no', 'retirement reg no', 'retirementregistration']) || '').toString().trim(),
           retirementFundContribution: parseFloat(getFieldValue(row, ['retirementfundcontribution', 'retirement contribution', 'retirement amount', 'monthlyretirement', 'retirement contrib', 'retirement cont'])) || 0,
-
-          // ══ STUDY POLICY (NEW - NamRA s17) ═════════════════════════════════
           studyPolicyName: (getFieldValue(row, ['studypolicyname', 'study policy name', 'study policy', 'studypolicy', 'burssaryscheme', 'bursary']) || '').toString().trim(),
           studyPolicyRegNo: (getFieldValue(row, ['studypolicyregno', 'study policy reg no', 'study reg no', 'studyregistration']) || '').toString().trim(),
           studyPolicyContribution: parseFloat(getFieldValue(row, ['studypolicycontribution', 'study contribution', 'study amount', 'studyamount', 'study contrib', 'study cont'])) || 0,
-
-          // ══ MEDICAL AID ════════════════════════════════════════════════════
           medicalAidFundName: (getFieldValue(row, ['medicalaidfundname', 'medical aid fund name', 'medical aid fund', 'medicalaidfund', 'medical aid', 'medicalaid']) || '').toString().trim(),
           medicalAidMemberNo: (getFieldValue(row, ['medicalaidmemberno', 'medical aid member no', 'member no', 'membernumber', 'policyno', 'policy no']) || '').toString().trim(),
           medicalAidContribution: parseFloat(getFieldValue(row, ['medicalaidcontribution', 'medical aid contribution', 'medical amount', 'medicalamount', 'medical contrib', 'medical cont'])) || 0,
-
-          // ══ FRINGE BENEFITS ════════════════════════════════════════════════
           hasCompanyVehicle: (() => {
             const val = getFieldValue(row, ['hascompanyvehicle', 'company vehicle', 'companyvehicle', 'vehicle', 'has vehicle']);
             if (!val) return false;
             return ['true', 'yes', 'y', '1', 'on'].includes(val.toString().toLowerCase().trim());
           })(),
-          
           housingType: (() => {
             const val = getFieldValue(row, ['housingtype', 'housing type', 'housing']);
             if (!val) return 'none';
@@ -514,23 +410,18 @@ exports.importEmployees = async (req, res) => {
               ? (normalised === 'subsidized' ? 'subsidised' : normalised)
               : 'none';
           })(),
-
-          // ══ BANKING DETAILS ════════════════════════════════════════════════
           bankName: (getFieldValue(row, ['bankname', 'bank name', 'bank']) || '').toString().trim(),
           bankAccountNumber: (getFieldValue(row, ['bankaccountnumber', 'account number', 'accountnumber', 'account no', 'accountno']) || '').toString().trim(),
           bankBranchCode: (getFieldValue(row, ['bankbranchcode', 'branch code', 'branchcode', 'branch']) || '').toString().trim(),
           accountType: (getFieldValue(row, ['accounttype', 'account type']) || '').toString().trim(),
-
           verificationToken,
           emailVerified: false,
           portalEnabled: false
         };
 
-        // Create employee
         const newEmployee = await Employee.create(employeeData);
         currentCount++;
 
-        // Send welcome email
         const verifyUrl = `${baseUrl}/portal/verify-email?token=${verificationToken}`;
         const portalUrl = `${baseUrl}/portal/login`;
         
@@ -551,10 +442,8 @@ exports.importEmployees = async (req, res) => {
       }
     }
 
-    // 3. Cleanup temp file
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     
-    // 4. Flash messages
     req.flash('success', `Import complete. ${successCount} added, ${skipCount} skipped.`);
     if (errors.length > 0) req.flash('error', `Some rows had issues: ${errors.slice(0, 3).join(', ')}`);
     res.redirect('/employees');
@@ -567,7 +456,7 @@ exports.importEmployees = async (req, res) => {
   }
 };
 
-// ─── GET /employees/:id/edit ─────────────────────────────────────────────────
+// ─── GET /employees/:id/edit ──────────────────────────────────────────────────
 exports.getEditEmployee = async (req, res) => {
   try {
     const employee = await Employee.findOne({
@@ -593,7 +482,7 @@ exports.getEditEmployee = async (req, res) => {
   }
 };
 
-// ─── PUT /employees/:id ──────────────────────────────────────────────────────
+// ─── PUT /employees/:id ───────────────────────────────────────────────────────
 exports.updateEmployee = async (req, res) => {
   const valErrors = validationResult(req);
   const employeeDoc = await Employee.findOne({
@@ -631,61 +520,39 @@ exports.updateEmployee = async (req, res) => {
       portalPassword, portalEnabled
     } = req.body;
 
-    // Update core fields
     employeeDoc.fullName = fullName?.trim();
     employeeDoc.idNumber = idNumber?.trim();
     employeeDoc.tinNumber = tinNumber?.trim() || undefined;
     employeeDoc.socialSecurityNumber = socialSecurityNumber?.trim() || undefined;
     employeeDoc.email = email?.toLowerCase().trim();
     employeeDoc.phone = normalisePhone(phone);
-
     employeeDoc.position = position?.trim() || '';
     employeeDoc.department = department?.trim() || '';
     employeeDoc.basicSalary = parseFloat(basicSalary) || employeeDoc.basicSalary;
     if (dateJoined) employeeDoc.dateJoined = new Date(dateJoined);
-
-    // Leave balances
     if (annualLeaveBalance !== undefined) employeeDoc.annualLeaveBalance = parseInt(annualLeaveBalance);
     if (sickLeaveBalance !== undefined) employeeDoc.sickLeaveBalance = parseInt(sickLeaveBalance);
-
-    // Pension & New Funds
     employeeDoc.pensionFundName = pensionFundName?.trim() || '';
     employeeDoc.pensionFundRegNo = pensionFundRegNo?.trim() || '';
     employeeDoc.pensionContribution = parseFloat(pensionContribution) || 0;
-
     employeeDoc.providentFundName = providentFundName?.trim() || '';
     employeeDoc.providentFundRegNo = providentFundRegNo?.trim() || '';
     employeeDoc.providentFundContribution = parseFloat(providentFundContribution) || 0;
-
     employeeDoc.retirementFundName = retirementFundName?.trim() || '';
     employeeDoc.retirementFundRegNo = retirementFundRegNo?.trim() || '';
     employeeDoc.retirementFundContribution = parseFloat(retirementFundContribution) || 0;
-
     employeeDoc.studyPolicyName = studyPolicyName?.trim() || '';
     employeeDoc.studyPolicyRegNo = studyPolicyRegNo?.trim() || '';
     employeeDoc.studyPolicyContribution = parseFloat(studyPolicyContribution) || 0;
-
-    // Medical Aid
     employeeDoc.medicalAidFundName = medicalAidFundName?.trim() || '';
     employeeDoc.medicalAidMemberNo = medicalAidMemberNo?.trim() || '';
     employeeDoc.medicalAidContribution = parseFloat(medicalAidContribution) || 0;
-
-    // Fringe Benefits
-    employeeDoc.hasCompanyVehicle = hasCompanyVehicle === 'on' ||
-                                   hasCompanyVehicle === true ||
-                                   hasCompanyVehicle === 'true';
-
-    employeeDoc.housingType = ['none', 'free', 'subsidised'].includes(housingType)
-      ? housingType
-      : employeeDoc.housingType || 'none';
-
-    // Banking
+    employeeDoc.hasCompanyVehicle = hasCompanyVehicle === 'on' || hasCompanyVehicle === true || hasCompanyVehicle === 'true';
+    employeeDoc.housingType = ['none', 'free', 'subsidised'].includes(housingType) ? housingType : employeeDoc.housingType || 'none';
     employeeDoc.bankName = bankName?.trim() || '';
     employeeDoc.bankAccountNumber = bankAccountNumber?.trim() || '';
     employeeDoc.bankBranchCode = bankBranchCode?.trim() || '';
     employeeDoc.accountType = accountType || '';
-
-    // Portal
     employeeDoc.portalEnabled = portalEnabled === 'on' || portalEnabled === true;
     if (portalPassword && portalPassword.length >= 6) {
       employeeDoc.portalPassword = portalPassword;
@@ -698,14 +565,12 @@ exports.updateEmployee = async (req, res) => {
 
   } catch (err) {
     console.error('Update employee error:', err);
-
     if (err.code === 11000) {
       const field = err.keyPattern?.email ? 'email' : 'idNumber';
       req.flash('error', `This ${field === 'email' ? 'email' : 'Namibian ID'} is already used by another employee.`);
     } else {
       req.flash('error', 'Failed to update employee.');
     }
-
     res.render('employees/edit', {
       title: 'Edit Employee – Veldt Payroll',
       employee: employeeDoc.toObject(),
@@ -715,15 +580,13 @@ exports.updateEmployee = async (req, res) => {
   }
 };
 
-// ─── DELETE /employees/:id ───────────────────────────────────────────────────
+// ─── DELETE /employees/:id ────────────────────────────────────────────────────
 exports.deleteEmployee = async (req, res) => {
   try {
     const employee = await Employee.findOne({ _id: req.params.id, company: req.session.user._id });
     if (!employee) return res.redirect('/employees');
-
     employee.isActive = false;
     await employee.save();
-
     req.flash('success', `${employee.fullName} has been removed.`);
     res.redirect('/employees');
   } catch (err) {

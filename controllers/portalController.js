@@ -1,13 +1,5 @@
 /**
  * controllers/portalController.js – Veldt Payroll Employee Portal
- * ─────────────────────────────────────────────────────────────────────────────
- * Handles employee self-service portal:
- * - Login / logout / email verification
- * - Dashboard (leave balances + payslip history)
- * - Payslip PDF download (theme-aware)
- * - PAYE5 / ITA5 annual tax certificate download
- * - Forgot password + reset password (fully integrated)
- * ─────────────────────────────────────────────────────────────────────────────
  */
 
 const { validationResult } = require('express-validator');
@@ -16,39 +8,11 @@ const PayrollRun = require('../models/PayrollRun');
 const User       = require('../models/User');
 const Settings   = require('../models/Settings');
 const moment     = require('moment-timezone');
-
-const nodemailer = require('nodemailer');
 const crypto     = require('crypto');
 
+const { sendMailWithTimeout } = require('../config/mailer');
 const { generatePayslipPDF }       = require('../utils/pdfGenerator');
 const { generatePAYE5Certificate } = require('../utils/Paye5generator');
-
-// ─────────────────────────────────────────────
-// CONFIG & CONSTANTS
-// ─────────────────────────────────────────────
-const baseUrl = process.env.BASE_URL || 'https://veldtpayroll.com';
-
-// ─────────────────────────────────────────────
-// Nodemailer transporter (same as main auth)
-// ─────────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-// ─────────────────────────────────────────────
-// HELPER: Send email with a timeout (non-blocking)
-// ─────────────────────────────────────────────
-function sendMailWithTimeout(mailOptions, timeoutMs = 8000) {
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Email send timeout')), timeoutMs)
-  );
-  return Promise.race([transporter.sendMail(mailOptions), timeoutPromise])
-    .catch(err => console.error('Background email error:', err.message));
-}
 
 // ─────────────────────────────────────────────
 // SHARED EMAIL STYLES
@@ -76,7 +40,7 @@ const emailStyles = `
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AUTHENTICATION: LOGIN & LOGOUT
+// AUTHENTICATION
 // ─────────────────────────────────────────────────────────────────────────────
 
 exports.getLogin = (req, res) => {
@@ -120,14 +84,10 @@ exports.postLogin = async (req, res) => {
       });
     }
 
-    // Email verification guard with Resend Link capability
     if (!employee.emailVerified) {
       return res.render('portal/login', {
         title:    'Employee Portal – Veldt Payroll',
-        errors:   [{ 
-          msg: 'Your email is not verified.', 
-          resendEmail: employee.email 
-        }],
+        errors:   [{ msg: 'Your email is not verified.', resendEmail: employee.email }],
         success:  [],
         error:    [],
         formData: req.body
@@ -164,32 +124,26 @@ exports.logout = (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// EMAIL VERIFICATION LOGIC
+// EMAIL VERIFICATION
 // ─────────────────────────────────────────────────────────────────────────────
 
 exports.getVerifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
-
     if (!token) {
       req.flash('error', 'Invalid verification link.');
       return res.redirect('/portal/login');
     }
-
     const employee = await Employee.findOne({ verificationToken: token });
-
     if (!employee) {
       req.flash('error', 'Verification link is invalid or has already been used.');
       return res.redirect('/portal/login');
     }
-
     employee.emailVerified     = true;
     employee.verificationToken = undefined;
     await employee.save();
-
     req.flash('success', 'Email verified successfully! You can now access your employee portal.');
     res.redirect('/portal/login');
-
   } catch (err) {
     console.error('Email verification error:', err);
     req.flash('error', 'An error occurred during verification.');
@@ -208,13 +162,11 @@ exports.resendVerification = async (req, res) => {
       req.flash('error', 'Account not found.');
       return res.redirect('/portal/login');
     }
-
     if (employee.emailVerified) {
       req.flash('success', 'Your email is already verified. Please log in.');
       return res.redirect('/portal/login');
     }
 
-    // Generate token if not present
     if (!employee.verificationToken) {
       employee.verificationToken = crypto.randomBytes(20).toString('hex');
       await employee.save();
@@ -332,14 +284,14 @@ exports.downloadPAYE5 = async (req, res) => {
       const ps = run.payslips.find(p => p.employee?.toString() === empSession._id);
       if (ps) {
         hasData = true;
-        annualData.annualSalary += ps.basicSalary || 0;
-        annualData.annualOTPay += ps.overtimePay || 0;
-        annualData.annualTaxAllow += ps.taxableAllowances || 0;
-        annualData.annualNonTaxAllow += ps.nonTaxableAllowances || 0;
-        annualData.annualGross += ps.grossPay || 0;
-        annualData.annualTaxGross += ps.taxableGross || 0;
-        annualData.annualPAYE += ps.paye || 0;
-        annualData.annualSSCEmployee += ps.sscEmployee || 0;
+        annualData.annualSalary      += ps.basicSalary          || 0;
+        annualData.annualOTPay       += ps.overtimePay          || 0;
+        annualData.annualTaxAllow    += ps.taxableAllowances     || 0;
+        annualData.annualNonTaxAllow += ps.nonTaxableAllowances  || 0;
+        annualData.annualGross       += ps.grossPay              || 0;
+        annualData.annualTaxGross    += ps.taxableGross          || 0;
+        annualData.annualPAYE        += ps.paye                  || 0;
+        annualData.annualSSCEmployee += ps.sscEmployee           || 0;
       }
     }
 
@@ -358,9 +310,9 @@ exports.downloadPAYE5 = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
-// PASSWORD RESET (UPDATED)
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PASSWORD RESET
+// ─────────────────────────────────────────────────────────────────────────────
 
 exports.getForgotPassword = (req, res) => {
   res.render('portal/forgot-password', { 
@@ -418,10 +370,9 @@ exports.getResetPassword = async (req, res) => {
   });
 };
 
-// UPDATED: Render success directly on login page instead of flash + redirect
 exports.postResetPassword = async (req, res) => {
   try {
-    const { password, confirmPassword } = req.body;   // Note: using confirmPassword to match form
+    const { password, confirmPassword } = req.body;
 
     const employee = await Employee.findOne({
       resetPasswordToken: req.params.token,
@@ -437,7 +388,6 @@ exports.postResetPassword = async (req, res) => {
       });
     }
 
-    // Validate password
     if (!password || password.length < 6) {
       return res.render('portal/reset-password', {
         title: 'Reset Password',
@@ -456,13 +406,11 @@ exports.postResetPassword = async (req, res) => {
       });
     }
 
-    // Update password
     employee.portalPassword = password;
     employee.resetPasswordToken = undefined;
     employee.resetPasswordExpires = undefined;
     await employee.save();
 
-    // ✅ SUCCESS: Render login page directly with success message
     res.render('portal/login', {
       title: 'Employee Portal – Veldt Payroll',
       success: ['Password updated successfully! You can now log in with your new password.'],
@@ -481,20 +429,20 @@ exports.postResetPassword = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // EMAIL BUILDERS
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 function buildPortalVerificationEmail({ to, fullName, verificationUrl }) {
-  const logoCoin = `<div class="header-logo-wrap">©</div>`;
+  const appUrl = 'https://veldtps.onrender.com';
   return {
-    from: `"Veldt Payroll" <${process.env.EMAIL_USER}>`,
+    from: 'Veldt Payroll <onboarding@resend.dev>',
     to,
     subject: `Verify your account – Veldt Payroll`,
     html: `<!DOCTYPE html><html><head><style>${emailStyles}</style></head><body>
       <div class="wrapper">
         <div class="header">
-          ${logoCoin}
+          <div class="header-logo-wrap">V</div>
           <div><div class="header-brand">Veldt Payroll</div><div class="header-tagline">Employee Portal</div></div>
         </div>
         <div class="body">
@@ -507,7 +455,7 @@ function buildPortalVerificationEmail({ to, fullName, verificationUrl }) {
         </div>
         <div class="footer">
           <p>
-            <a href="${baseUrl}/privacy">Privacy</a> • <a href="${baseUrl}/terms">Terms</a> • <a href="${baseUrl}/support">Support</a>
+            <a href="${appUrl}/privacy">Privacy</a> • <a href="${appUrl}/terms">Terms</a> • <a href="${appUrl}/support">Support</a>
           </p>
           <p>© ${new Date().getFullYear()} Veldt Payroll. All rights reserved.</p>
         </div>
@@ -517,15 +465,15 @@ function buildPortalVerificationEmail({ to, fullName, verificationUrl }) {
 }
 
 function buildPortalPasswordResetEmail({ to, fullName, resetUrl }) {
-  const logoCoin = `<div class="header-logo-wrap">©</div>`;
+  const appUrl = 'https://veldtps.onrender.com';
   return {
-    from: `"Veldt Payroll" <${process.env.EMAIL_USER}>`,
+    from: 'Veldt Payroll <onboarding@resend.dev>',
     to,
     subject: `Reset your portal password`,
     html: `<!DOCTYPE html><html><head><style>${emailStyles}</style></head><body>
       <div class="wrapper">
         <div class="header">
-          ${logoCoin}
+          <div class="header-logo-wrap">V</div>
           <div><div class="header-brand">Veldt Payroll</div><div class="header-tagline">Security</div></div>
         </div>
         <div class="body">
@@ -537,7 +485,7 @@ function buildPortalPasswordResetEmail({ to, fullName, resetUrl }) {
         </div>
         <div class="footer">
           <p>
-            <a href="${baseUrl}/privacy">Privacy</a> • <a href="${baseUrl}/terms">Terms</a> • <a href="${baseUrl}/support">Support</a>
+            <a href="${appUrl}/privacy">Privacy</a> • <a href="${appUrl}/terms">Terms</a> • <a href="${appUrl}/support">Support</a>
           </p>
           <p>© ${new Date().getFullYear()} Veldt Payroll. All rights reserved.</p>
         </div>
@@ -545,4 +493,3 @@ function buildPortalPasswordResetEmail({ to, fullName, resetUrl }) {
     </body></html>`
   };
 }
-

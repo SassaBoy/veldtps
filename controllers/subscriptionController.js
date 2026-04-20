@@ -1,5 +1,5 @@
 /**
- * subscriptionController.js – VeldtPayroll (FIXED REMINDER LOGIC)
+ * controllers/subscriptionController.js – VeldtPayroll
  */
 
 const Subscription = require('../models/Subscription');
@@ -9,24 +9,7 @@ const moment = require('moment-timezone');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const nodemailer = require('nodemailer');
-
-// ── Email transporter ──────────────────────────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
-
-function sendMailWithTimeout(mailOptions, timeoutMs = 8000) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Email send timeout')), timeoutMs)
-  );
-  return Promise.race([transporter.sendMail(mailOptions), timeout])
-    .catch(err => console.error('Background email error:', err.message));
-}
+const { sendMailWithTimeout } = require('../config/mailer');
 
 // ── Shared Professional Email Styles ──────────────────────────────────────────
 const emailStyles = `
@@ -49,7 +32,6 @@ const emailStyles = `
   .footer { background: #071421; padding: 22px 40px; text-align: center; color: rgba(255,255,255,0.2); font-size: 0.75rem; }
 `;
 
-// ── Email Builder Helper ──────────────────────────────────────────────────────
 function buildBaseEmailHtml(content) {
   return `
     <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>${emailStyles}</style></head>
@@ -173,7 +155,6 @@ exports.getAdminSubscriptions = async (req, res) => {
   try {
     const pending = await Subscription.find({ status: 'pending_payment' }).populate('company').sort({ updatedAt: -1 }).lean();
     const all = await Subscription.find({}).populate('company').sort({ updatedAt: -1 }).lean();
-
     res.render('subscription/admin', {
       title: 'Subscription Management',
       pending,
@@ -190,8 +171,8 @@ exports.approveSubscription = async (req, res) => {
   try {
     const sub = await Subscription.findById(req.params.id).populate('company');
     if (!sub || !sub.pendingRequest) {
-        req.flash('error', 'No pending request found.');
-        return res.redirect('/admin/subscriptions');
+      req.flash('error', 'No pending request found.');
+      return res.redirect('/admin/subscriptions');
     }
 
     const { plan, amount, reference, proofUrl } = sub.pendingRequest;
@@ -205,7 +186,6 @@ exports.approveSubscription = async (req, res) => {
       verifiedAt: new Date()
     });
 
-    // Uses the new 30-day / 365-day logic
     sub.startNewCycle(plan, amount);
     sub.pendingRequest = undefined;
     await sub.save();
@@ -218,11 +198,11 @@ exports.approveSubscription = async (req, res) => {
         { label: "Valid Until", val: moment(sub.currentPeriodEnd).format('DD MMMM YYYY') }
       ],
       ctaText: "Go to Dashboard",
-      ctaUrl: `${req.protocol}://${req.get('host')}/dashboard`
+      ctaUrl: `https://veldtps.onrender.com/dashboard`
     });
 
     sendMailWithTimeout({
-      from: `"Veldt Payroll" <${process.env.EMAIL_USER}>`,
+      from: 'Veldt Payroll <onboarding@resend.dev>',
       to: sub.company.email,
       subject: `✓ ${plan.toUpperCase()} Plan Activated`,
       html: emailHtml
@@ -237,7 +217,6 @@ exports.approveSubscription = async (req, res) => {
 };
 
 exports.sendRenewalReminders = async (req, res) => {
-  
   try {
     const items = await Subscription.findSubscriptionsNeedingReminders();
     let sentCount = 0;
@@ -254,11 +233,11 @@ exports.sendRenewalReminders = async (req, res) => {
           { label: "Expiry Date", val: moment(sub.currentPeriodEnd).format('DD MMM YYYY') }
         ],
         ctaText: "Renew Subscription",
-        ctaUrl: `${req.protocol}://${req.get('host')}/subscribe`
+        ctaUrl: `https://veldtps.onrender.com/subscribe`
       });
 
       await sendMailWithTimeout({
-        from: `"Veldt Payroll" <${process.env.EMAIL_USER}>`,
+        from: 'Veldt Payroll <onboarding@resend.dev>',
         to: sub.company.email,
         subject: "⚠️ Subscription Renewal Notice",
         html: emailHtml
@@ -296,19 +275,16 @@ exports.rejectSubscription = async (req, res) => {
     sub.pendingRequest = undefined;
     await sub.save({ validateBeforeSave: false });
 
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
     const emailHtml = buildBaseEmailHtml({
       greeting: "Verification Failed",
       message: `We could not verify your payment proof. Reason: ${note || 'Invalid document.'}`,
-      details: [
-        { label: "Status", val: "Rejected" }
-      ],
+      details: [{ label: "Status", val: "Rejected" }],
       ctaText: "Try Again",
-      ctaUrl: `${baseUrl}/subscribe`
+      ctaUrl: `https://veldtps.onrender.com/subscribe`
     });
 
     sendMailWithTimeout({
-      from: `"Veldt Payroll Support" <${process.env.EMAIL_USER}>`,
+      from: 'Veldt Payroll <onboarding@resend.dev>',
       to: sub.company.email,
       subject: 'Payment Verification Failed',
       html: emailHtml
@@ -319,8 +295,5 @@ exports.rejectSubscription = async (req, res) => {
     res.redirect('/admin/subscriptions');
   }
 };
-
-
-
 
 module.exports = exports;
