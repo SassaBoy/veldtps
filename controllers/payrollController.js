@@ -41,7 +41,7 @@ const {
 
 const { generatePayslipPDF, generateCompliancePDF }      = require('../utils/pdfGenerator');
 const { generateBankTransferCSV, generateComplianceCSV } = require('../utils/csvGenerator');
-const { generateETXBuffer }                              = require('../utils/EtxGenerator');
+const { generateETXBuffer }                              = require('../utils/Etxgenerator');
 const { generateSSCForm }                                = require('../utils/Sscformgenerator');
 const { generatePAYE5Certificate, appendAllPAYE5ToZip }  = require('../utils/Paye5generator');
 
