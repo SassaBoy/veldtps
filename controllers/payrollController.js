@@ -41,9 +41,9 @@ const {
 
 const { generatePayslipPDF, generateCompliancePDF }      = require('../utils/pdfGenerator');
 const { generateBankTransferCSV, generateComplianceCSV } = require('../utils/csvGenerator');
-const { generateETXBuffer }                              = require('../utils/etxGenerator');
-const { generateSSCForm }                                = require('../utils/sscformgenerator');
-const { generatePAYE5Certificate, appendAllPAYE5ToZip }  = require('../utils/paye5generator');
+const { generateETXBuffer }                              = require('../utils/EtxGenerator');
+const { generateSSCForm }                                = require('../utils/Sscformgenerator');
+const { generatePAYE5Certificate, appendAllPAYE5ToZip }  = require('../utils/Paye5generator');
 
 const { TRIAL_RUN_LIMIT } = require('../middleware/subscriptionMiddleware');
 const MAX_TRIAL_RUNS = TRIAL_RUN_LIMIT || 2;
