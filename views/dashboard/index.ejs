@@ -2,7 +2,29 @@
 <%- include('../partials/navbar') %>
 
 <style>
-  .nm-page-wrapper { flex: 1; padding: 32px 24px 48px; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nm-app-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .nm-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nm-page-wrapper { 
+    flex: 1;
+    padding: 32px 24px 80px; 
+    background: #070e18;
+  }
   .nm-page-inner   { max-width: 1280px; margin: 0 auto; }
 
   /* ── Alerts ───────────────────────────────────────── */
@@ -48,7 +70,6 @@
   }
   .nm-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.35); }
 
-  /* Subtle corner glow per colour */
   .nm-kpi-card::before {
     content: ''; position: absolute;
     top: -40px; right: -40px;
@@ -214,220 +235,297 @@
     .nm-bottom-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 575.98px) {
-    .nm-page-wrapper { padding: 20px 16px 40px; }
+    .nm-page-wrapper { padding: 20px 16px 100px; }
     .nm-kpi-grid     { grid-template-columns: 1fr; }
     .nm-page-title   { font-size: 1.3rem; }
     .nm-kpi-value    { font-size: 1.3rem; }
     .nm-table thead th:nth-child(4),
     .nm-table td:nth-child(4) { display: none; }
   }
+
+  /* Footer */
+  .nm-footer {
+    background: #0a1725;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 32px 24px 28px;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.78rem;
+  }
+  .nm-footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: space-between;
+  }
 </style>
 
-<div class="nm-page-wrapper">
-  <div class="nm-page-inner">
+<div class="nm-app-wrapper">
+  <div class="nm-main-content">
 
-    <!-- Flash messages -->
-    <% if (success && success.length > 0) { %>
-      <div class="nm-alert nm-alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill"></i>
-        <span><%= success[0] %></span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
-      </div>
-    <% } %>
-    <% if (error && error.length > 0) { %>
-      <div class="nm-alert nm-alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-circle-fill"></i>
-        <span><%= error[0] %></span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
-      </div>
-    <% } %>
+    <div class="nm-page-wrapper">
+      <div class="nm-page-inner">
 
-    <!-- Page header -->
-    <div class="nm-page-header">
-      <div>
-        <h1 class="nm-page-title">Dashboard</h1>
-        <p class="nm-page-subtitle"><%= currentMonth %> &mdash; <%= user.companyName %></p>
-      </div>
-      <a href="/payroll/run" class="nm-btn-primary">
-        <i class="bi bi-play-circle-fill"></i>Run Payroll
-      </a>
-    </div>
-
-    <!-- KPI Cards -->
-    <div class="nm-kpi-grid">
-
-      <!-- Active Employees -->
-      <div class="nm-kpi-card nm-kpi-blue">
-        <div class="nm-kpi-top">
-          <span class="nm-kpi-icon"><i class="bi bi-people-fill"></i></span>
-          <span class="nm-kpi-trend"><i class="bi bi-building"></i>Staff</span>
-        </div>
-        <div>
-          <div class="nm-kpi-label">Active Employees</div>
-          <div class="nm-kpi-value"><%= employeeCount %></div>
-        </div>
-      </div>
-
-      <!-- Gross Pay -->
-      <div class="nm-kpi-card nm-kpi-green">
-        <div class="nm-kpi-top">
-          <span class="nm-kpi-icon"><i class="bi bi-cash-stack"></i></span>
-          <span class="nm-kpi-trend"><i class="bi bi-calendar3"></i>This month</span>
-        </div>
-        <div>
-          <div class="nm-kpi-label">Gross Payroll</div>
-          <div class="nm-kpi-value">
-            <% if (currentPayroll) { %>
-              N$&nbsp;<%= currentPayroll.totalGrossPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
-            <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+        <!-- Flash messages -->
+        <% if (success && success.length > 0) { %>
+          <div class="nm-alert nm-alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span><%= success[0] %></span>
+            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
           </div>
-        </div>
-      </div>
-
-      <!-- Net Pay -->
-      <div class="nm-kpi-card nm-kpi-teal">
-        <div class="nm-kpi-top">
-          <span class="nm-kpi-icon"><i class="bi bi-bank2"></i></span>
-          <span class="nm-kpi-trend"><i class="bi bi-arrow-down-circle"></i>Net</span>
-        </div>
-        <div>
-          <div class="nm-kpi-label">Total Net Pay</div>
-          <div class="nm-kpi-value">
-            <% if (currentPayroll) { %>
-              N$&nbsp;<%= currentPayroll.totalNetPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
-            <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+        <% } %>
+        <% if (error && error.length > 0) { %>
+          <div class="nm-alert nm-alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span><%= error[0] %></span>
+            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
           </div>
-        </div>
-      </div>
+        <% } %>
 
-      <!-- PAYE -->
-      <div class="nm-kpi-card nm-kpi-orange">
-        <div class="nm-kpi-top">
-          <span class="nm-kpi-icon"><i class="bi bi-clipboard2-check"></i></span>
-          <span class="nm-kpi-trend"><i class="bi bi-receipt"></i>Tax</span>
-        </div>
-        <div>
-          <div class="nm-kpi-label">Total PAYE</div>
-          <div class="nm-kpi-value">
-            <% if (currentPayroll) { %>
-              N$&nbsp;<%= currentPayroll.totalPAYE.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
-            <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+        <!-- Page header -->
+        <div class="nm-page-header">
+          <div>
+            <h1 class="nm-page-title">Dashboard</h1>
+            <p class="nm-page-subtitle"><%= currentMonth %> &mdash; <%= user.companyName %></p>
           </div>
-        </div>
-      </div>
-
-    </div><!-- /nm-kpi-grid -->
-
-    <!-- Bottom section -->
-    <div class="nm-bottom-grid">
-
-      <!-- Quick Actions -->
-      <div class="nm-panel">
-        <div class="nm-panel-header">
-          <div class="nm-panel-title">
-            <span class="nm-panel-title-icon gold"><i class="bi bi-lightning-charge-fill"></i></span>
-            Quick Actions
-          </div>
-        </div>
-        <div class="nm-panel-body">
-          <div class="nm-quick-actions">
-            <a href="/payroll/run" class="nm-qa-item">
-              <span class="nm-qa-icon"><i class="bi bi-play-circle-fill"></i></span>
-              Run Monthly Payroll
-              <i class="bi bi-chevron-right nm-qa-chevron"></i>
-            </a>
-            <a href="/employees/new" class="nm-qa-item">
-              <span class="nm-qa-icon"><i class="bi bi-person-plus-fill"></i></span>
-              Add Employee
-              <i class="bi bi-chevron-right nm-qa-chevron"></i>
-            </a>
-            <a href="/employees" class="nm-qa-item">
-              <span class="nm-qa-icon"><i class="bi bi-people-fill"></i></span>
-              Manage Employees
-              <i class="bi bi-chevron-right nm-qa-chevron"></i>
-            </a>
-            <a href="/payroll" class="nm-qa-item">
-              <span class="nm-qa-icon"><i class="bi bi-clock-history"></i></span>
-              Payroll History
-              <i class="bi bi-chevron-right nm-qa-chevron"></i>
-            </a>
-            <a href="/settings" class="nm-qa-item">
-              <span class="nm-qa-icon"><i class="bi bi-gear-fill"></i></span>
-              Settings
-              <i class="bi bi-chevron-right nm-qa-chevron"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent Payroll Runs -->
-      <div class="nm-panel">
-        <div class="nm-panel-header">
-          <div class="nm-panel-title">
-            <span class="nm-panel-title-icon blue"><i class="bi bi-clock-history"></i></span>
-            Recent Payroll Runs
-          </div>
-          <a href="/payroll" class="nm-view-all-btn">
-            View All <i class="bi bi-arrow-right"></i>
+          <a href="/payroll/run" class="nm-btn-primary">
+            <i class="bi bi-play-circle-fill"></i> Run Payroll
           </a>
         </div>
-        <div>
-          <% if (recentPayrolls.length === 0) { %>
-            <div class="nm-empty">
-              <i class="bi bi-inbox"></i>
-              <p>No payroll runs yet.</p>
-              <a href="/payroll/run">Run your first payroll &rarr;</a>
+
+        <!-- KPI Cards -->
+        <div class="nm-kpi-grid">
+
+          <!-- Active Employees -->
+          <div class="nm-kpi-card nm-kpi-blue">
+            <div class="nm-kpi-top">
+              <span class="nm-kpi-icon"><i class="bi bi-people-fill"></i></span>
+              <span class="nm-kpi-trend"><i class="bi bi-building"></i>Staff</span>
             </div>
-          <% } else { %>
-            <div class="table-responsive">
-              <table class="nm-table">
-                <thead>
-                  <tr>
-                    <th>Period</th>
-                    <th>Employees</th>
-                    <th>Net Pay</th>
-                    <th>PAYE</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% recentPayrolls.forEach(run => { %>
-                    <tr>
-                      <td>
-                        <span class="nm-period-cell">
-                          <%= moment(`${run.year}-${String(run.month).padStart(2,'0')}-01`).format('MMMM YYYY') %>
-                        </span>
-                      </td>
-                      <td>
-                        <span class="nm-emp-count">
-                          <i class="bi bi-people"></i><%= run.employeeCount %>
-                        </span>
-                      </td>
-                      <td><span class="nm-money">N$ <%= run.totalNetPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %></span></td>
-                      <td><span class="nm-money">N$ <%= run.totalPAYE.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %></span></td>
-                      <td>
-                        <a href="/payroll/<%= run._id %>" class="nm-view-btn">
-                          View <i class="bi bi-arrow-right"></i>
-                        </a>
-                      </td>
-                    </tr>
-                  <% }) %>
-                </tbody>
-              </table>
+            <div>
+              <div class="nm-kpi-label">Active Employees</div>
+              <div class="nm-kpi-value"><%= employeeCount %></div>
             </div>
-          <% } %>
+          </div>
+
+          <!-- Gross Pay -->
+          <div class="nm-kpi-card nm-kpi-green">
+            <div class="nm-kpi-top">
+              <span class="nm-kpi-icon"><i class="bi bi-cash-stack"></i></span>
+              <span class="nm-kpi-trend"><i class="bi bi-calendar3"></i>This month</span>
+            </div>
+            <div>
+              <div class="nm-kpi-label">Gross Payroll</div>
+              <div class="nm-kpi-value">
+                <% if (currentPayroll) { %>
+                  N$&nbsp;<%= currentPayroll.totalGrossPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+                <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- Net Pay -->
+          <div class="nm-kpi-card nm-kpi-teal">
+            <div class="nm-kpi-top">
+              <span class="nm-kpi-icon"><i class="bi bi-bank2"></i></span>
+              <span class="nm-kpi-trend"><i class="bi bi-arrow-down-circle"></i>Net</span>
+            </div>
+            <div>
+              <div class="nm-kpi-label">Total Net Pay</div>
+              <div class="nm-kpi-value">
+                <% if (currentPayroll) { %>
+                  N$&nbsp;<%= currentPayroll.totalNetPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+                <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAYE -->
+          <div class="nm-kpi-card nm-kpi-orange">
+            <div class="nm-kpi-top">
+              <span class="nm-kpi-icon"><i class="bi bi-clipboard2-check"></i></span>
+              <span class="nm-kpi-trend"><i class="bi bi-receipt"></i>Tax</span>
+            </div>
+            <div>
+              <div class="nm-kpi-label">Total PAYE</div>
+              <div class="nm-kpi-value">
+                <% if (currentPayroll) { %>
+                  N$&nbsp;<%= currentPayroll.totalPAYE.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %>
+                <% } else { %><span class="nm-not-run">Not run yet</span><% } %>
+              </div>
+            </div>
+          </div>
+
         </div>
+
+        <!-- Bottom section -->
+        <div class="nm-bottom-grid">
+
+          <!-- Quick Actions -->
+          <div class="nm-panel">
+            <div class="nm-panel-header">
+              <div class="nm-panel-title">
+                <span class="nm-panel-title-icon gold"><i class="bi bi-lightning-charge-fill"></i></span>
+                Quick Actions
+              </div>
+            </div>
+            <div class="nm-panel-body">
+              <div class="nm-quick-actions">
+                <a href="/payroll/run" class="nm-qa-item">
+                  <span class="nm-qa-icon"><i class="bi bi-play-circle-fill"></i></span>
+                  Run Monthly Payroll
+                  <i class="bi bi-chevron-right nm-qa-chevron"></i>
+                </a>
+                <a href="/employees/new" class="nm-qa-item">
+                  <span class="nm-qa-icon"><i class="bi bi-person-plus-fill"></i></span>
+                  Add Employee
+                  <i class="bi bi-chevron-right nm-qa-chevron"></i>
+                </a>
+                <a href="/employees" class="nm-qa-item">
+                  <span class="nm-qa-icon"><i class="bi bi-people-fill"></i></span>
+                  Manage Employees
+                  <i class="bi bi-chevron-right nm-qa-chevron"></i>
+                </a>
+                <a href="/payroll" class="nm-qa-item">
+                  <span class="nm-qa-icon"><i class="bi bi-clock-history"></i></span>
+                  Payroll History
+                  <i class="bi bi-chevron-right nm-qa-chevron"></i>
+                </a>
+                <a href="/settings" class="nm-qa-item">
+                  <span class="nm-qa-icon"><i class="bi bi-gear-fill"></i></span>
+                  Settings
+                  <i class="bi bi-chevron-right nm-qa-chevron"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Payroll Runs -->
+          <div class="nm-panel">
+            <div class="nm-panel-header">
+              <div class="nm-panel-title">
+                <span class="nm-panel-title-icon blue"><i class="bi bi-clock-history"></i></span>
+                Recent Payroll Runs
+              </div>
+              <a href="/payroll" class="nm-view-all-btn">
+                View All <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+            <div>
+              <% if (recentPayrolls.length === 0) { %>
+                <div class="nm-empty">
+                  <i class="bi bi-inbox"></i>
+                  <p>No payroll runs yet.</p>
+                  <a href="/payroll/run">Run your first payroll &rarr;</a>
+                </div>
+              <% } else { %>
+                <div class="table-responsive">
+                  <table class="nm-table">
+                    <thead>
+                      <tr>
+                        <th>Period</th>
+                        <th>Employees</th>
+                        <th>Net Pay</th>
+                        <th>PAYE</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% recentPayrolls.forEach(run => { %>
+                        <tr>
+                          <td>
+                            <span class="nm-period-cell">
+                              <%= moment(`${run.year}-${String(run.month).padStart(2,'0')}-01`).format('MMMM YYYY') %>
+                            </span>
+                          </td>
+                          <td>
+                            <span class="nm-emp-count">
+                              <i class="bi bi-people"></i><%= run.employeeCount %>
+                            </span>
+                          </td>
+                          <td><span class="nm-money">N$ <%= run.totalNetPay.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %></span></td>
+                          <td><span class="nm-money">N$ <%= run.totalPAYE.toLocaleString('en-NA', {minimumFractionDigits:2, maximumFractionDigits:2}) %></span></td>
+                          <td>
+                            <a href="/payroll/<%= run._id %>" class="nm-view-btn">
+                              View <i class="bi bi-arrow-right"></i>
+                            </a>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="nm-disclaimer">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span><strong>Disclaimer:</strong> Payroll calculations are for guidance only. Always verify with NamRA and Social Security before final submission.</span>
+        </div>
+
       </div>
-
-    </div><!-- /nm-bottom-grid -->
-
-    <!-- Disclaimer -->
-    <div class="nm-disclaimer">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      <span><strong>Disclaimer:</strong> Payroll calculations are for guidance only. Always verify with NamRA and Social Security before final submission.</span>
     </div>
 
   </div>
+
+  <!-- Footer - Now properly positioned and won't interfere with content -->
+  <footer class="nm-footer">
+    <div class="nm-footer-inner">
+
+      <!-- Left: brand + copyright -->
+      <div class="nm-footer-left">
+        <a href="/dashboard" class="nm-footer-brand">
+          <span class="nm-footer-brand-icon"><i class="bi bi-coin"></i></span>
+          <span class="nm-footer-brand-text">Veldt Payroll</span>
+        </a>
+        <span class="nm-footer-copy">
+          &copy; <%= new Date().getFullYear() %> Veldt Payroll &mdash; Built for Namibian businesses
+        </span>
+      </div>
+
+      <!-- Center: utility links -->
+      <nav class="nm-footer-links" aria-label="Footer links">
+        <a href="/privacy" class="nm-footer-link">Privacy</a>
+        <a href="/terms" class="nm-footer-link">Terms</a>
+        <a href="/support" class="nm-footer-link">Support</a>
+        <a href="https://namra.org.na" target="_blank" rel="noopener" class="nm-footer-link">NamRA</a>
+      </nav>
+
+      <!-- Right: compliance notice -->
+      <div class="nm-footer-notice" role="note">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Payroll calculations are for guidance only. Always verify with NamRA and Social Security before final submission.</span>
+      </div>
+
+    </div>
+  </footer>
 </div>
 
-<%- include('../partials/footer') %>
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="/js/main.js"></script>
+<script>
+  (function () {
+    const maxAge = <%= typeof sessionMaxAge !== 'undefined' ? sessionMaxAge : 0 %>;
+    const isAdmin = <%= user ? 'true' : 'false' %>;
+
+    if (!maxAge || maxAge <= 0) return;
+
+    setTimeout(() => {
+      if (isAdmin) {
+        window.location.href = '/login?expired=1';
+      } else {
+        window.location.href = '/portal/login?expired=1';
+      }
+    }, maxAge);
+  })();
+</script>
+</body>
+</html>

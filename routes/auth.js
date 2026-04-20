@@ -68,6 +68,7 @@ router.get('/verify-email', authController.verifyEmail);
 router.get('/resend-verification', authController.getResendVerification);
 
 // ── LOGOUT ────────────────────────────────────────────────────────────────────
+router.get('/logout', authController.logout);   // ✅ ADD THIS
 router.post('/logout', authController.logout);
 
 // ── PASSWORD RESET ────────────────────────────────────────────────────────────

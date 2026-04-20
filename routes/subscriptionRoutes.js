@@ -1,5 +1,5 @@
 /**
- * subscriptionRoutes.js – NamPayroll
+ * subscriptionRoutes.js – VeldtPayroll
  */
 
 const express = require('express');
@@ -25,5 +25,9 @@ router.post('/subscribe/request', requireAdmin, ctrl.uploadProof, ctrl.postSubsc
 router.get('/admin/subscriptions',              requireAdmin, requireSuperAdmin, ctrl.getAdminSubscriptions);
 router.post('/admin/subscriptions/:id/approve', requireAdmin, requireSuperAdmin, ctrl.approveSubscription);
 router.post('/admin/subscriptions/:id/reject',  requireAdmin, requireSuperAdmin, ctrl.rejectSubscription);
+
+// ── Cron job endpoint — send renewal reminder emails ──────────────────────────
+// Called every 6 hours by the scheduler in app.js
+router.post('/admin/send-reminders', requireAdmin, requireSuperAdmin, ctrl.sendRenewalReminders);
 
 module.exports = router;

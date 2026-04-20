@@ -14,7 +14,7 @@
     overflow: hidden;
   }
 
-  /* Ambient blue glow — distinct from 500's red */
+  /* Ambient blue glow */
   .err-page::before {
     content: '';
     position: absolute;
@@ -57,7 +57,6 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Top accent — amber only, softer than 500 */
   .err-card::before {
     content: '';
     position: absolute;
@@ -67,7 +66,6 @@
     border-radius: 20px 20px 0 0;
   }
 
-  /* Large ghost "404" watermark behind content */
   .err-watermark {
     position: absolute;
     top: 18px;
@@ -92,7 +90,6 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 28px;
-    animation: cardIn 0.5s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .err-icon-wrap svg {
@@ -109,7 +106,6 @@
     text-transform: uppercase;
     color: #f5a623;
     margin-bottom: 10px;
-    animation: cardIn 0.5s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .err-title {
@@ -120,7 +116,6 @@
     letter-spacing: -0.03em;
     line-height: 1.2;
     margin-bottom: 12px;
-    animation: cardIn 0.5s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .err-desc {
@@ -129,7 +124,6 @@
     color: rgba(255,255,255,0.4);
     line-height: 1.65;
     margin-bottom: 36px;
-    animation: cardIn 0.5s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .err-divider {
@@ -143,7 +137,6 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    animation: cardIn 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .btn-primary-nm {
@@ -187,51 +180,66 @@
     border-color: rgba(255,255,255,0.14);
   }
 
-  /* Brand top-left */
+  /* ── EXACT LOGO FROM NAVBAR ─────────────────────────────── */
   .err-brand {
     position: absolute;
-    top: 28px;
+    top: 32px;
     left: 40px;
     z-index: 2;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
     text-decoration: none;
-    animation: cardIn 0.4s 0.05s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-  .err-brand-logo {
-    width: 30px; height: 30px;
-    background: #f5a623;
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
+
+  .nm-brand-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(245, 166, 35, 0.12);   /* This is the yellow background you wanted */
+    border: 1px solid rgba(245, 166, 35, 0.25);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.18rem;
+    color: #f5a623;
+    flex-shrink: 0;
   }
-  .err-brand-logo svg { width: 16px; height: 16px; }
-  .err-brand-name {
+
+  .nm-brand-text {
     font-family: 'Sora', sans-serif;
-    font-size: 0.9rem;
+    font-size: 1.18rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: -0.01em;
+    color: rgba(255,255,255,0.92);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .nm-brand-highlight {
+    color: #f5a623;
+  }
+
+  .err-brand:hover {
+    opacity: 0.92;
   }
 </style>
 
 <div class="err-page">
 
+  <!-- Same logo design as navbar -->
   <a href="/dashboard" class="err-brand">
-    <div class="err-brand-logo">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L3 7V12C3 16.55 6.84 20.74 12 22C17.16 20.74 21 16.55 21 12V7L12 2Z" fill="#1a0e00"/>
-        <path d="M9 12L11 14L15 10" stroke="#1a0e00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <span class="err-brand-name">NamPayroll</span>
+    <span class="nm-brand-icon">
+      <i class="bi bi-coin"></i>
+    </span>
+    <span class="nm-brand-text">
+      <span class="nm-brand-highlight">Veldt</span>Payroll
+    </span>
   </a>
 
   <div class="err-card">
     <div class="err-watermark">404</div>
 
     <div class="err-icon-wrap">
-      <!-- Compass / lost icon -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
@@ -249,11 +257,16 @@
 
     <div class="err-actions">
       <a href="/dashboard" class="btn-primary-nm">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
         Go to Dashboard
       </a>
       <a href="javascript:history.back()" class="btn-ghost-nm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
         Go Back
       </a>
     </div>

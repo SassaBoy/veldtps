@@ -22,7 +22,15 @@ router.post('/login', redirectIfEmployee, [
 // Email verification link (sent in welcome email)
 router.get('/verify-email', portalController.getVerifyEmail);
 
+router.get('/logout', portalController.logout);
 router.post('/logout', portalController.logout);
+
+// ── PASSWORD RESET ────────────────────────────────────────────────────────────
+router.get('/forgot-password',  redirectIfEmployee, portalController.getForgotPassword);
+router.post('/forgot-password', redirectIfEmployee, portalController.postForgotPassword);
+
+router.get('/reset-password/:token',   portalController.getResetPassword);
+router.post('/reset-password/:token',  portalController.postResetPassword);
 
 // ── Protected employee routes ─────────────────────────────────────────────────
 router.get('/dashboard', requireEmployee, portalController.getDashboard);
@@ -32,5 +40,6 @@ router.get('/payslip/:runId/:payslipId/pdf', requireEmployee, portalController.d
 
 // ITA5 / PAYE5 annual tax certificate for a given tax year
 router.get('/paye5/:taxYear', requireEmployee, portalController.downloadPAYE5);
+router.get('/resend-verification', portalController.resendVerification);
 
 module.exports = router;

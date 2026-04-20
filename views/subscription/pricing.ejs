@@ -117,7 +117,6 @@
 <div class="nm-page-wrapper">
   <div class="nm-page-inner">
 
-    <%# typeof check — same pattern used in register.ejs to prevent "not defined" crash %>
     <% if (typeof success !== 'undefined' && success.length > 0) { %>
       <div class="nm-alert nm-alert-success" id="successAlert">
         <i class="bi bi-check-circle-fill"></i>
@@ -131,14 +130,12 @@
       </div>
     <% } %>
 
-    <!-- ── Header ── -->
     <div class="nm-pricing-header">
-      <div class="nm-pricing-eyebrow"><i class="bi bi-lightning-charge-fill"></i> NamPayroll Plans</div>
+      <div class="nm-pricing-eyebrow"><i class="bi bi-lightning-charge-fill"></i> Veldt Payroll Plans</div>
       <h1 class="nm-pricing-title">Simple, transparent pricing</h1>
       <p class="nm-pricing-sub">Free trial includes up to 3 employees. Paid plans include unlimited employees. No hidden fees.</p>
     </div>
 
-    <!-- ── Current status banner ── -->
     <%
       const isPaid        = subscription.plan !== 'trial' && subscription.status === 'active';
       const isPending     = subscription.status === 'pending_payment';
@@ -177,10 +174,8 @@
       </div>
     <% } %>
 
-    <!-- ── Plan cards ── -->
     <div class="nm-plans-grid">
 
-      <!-- Trial -->
       <div class="nm-plan-card">
         <div class="nm-plan-name">Free Trial</div>
         <div class="nm-plan-price"><sup>N$</sup>0</div>
@@ -198,7 +193,6 @@
         </span>
       </div>
 
-      <!-- Monthly -->
       <div class="nm-plan-card featured">
         <div class="nm-plan-badge">Most Popular</div>
         <div class="nm-plan-name">Monthly</div>
@@ -221,7 +215,6 @@
         <% } %>
       </div>
 
-      <!-- Annual -->
       <div class="nm-plan-card">
         <div class="nm-plan-name">Annual</div>
         <div class="nm-plan-price"><sup>N$</sup><%= Math.round(plans.annual.price / 12) %><span class="period">/mo</span></div>
@@ -245,7 +238,6 @@
 
     </div>
 
-    <!-- ── Payment section (only shown when not paid and not pending) ── -->
     <% if (!isPaid && !isPending) { %>
     <div class="nm-payment-section" id="payment-form">
       <div class="nm-payment-header">
@@ -317,7 +309,6 @@
     </div>
     <% } %>
 
-    <!-- ── FAQ ── -->
     <div class="nm-payment-section">
       <div class="nm-payment-header">
         <i class="bi bi-question-circle" style="color:#60a5fa;font-size:1rem;"></i>
@@ -349,7 +340,6 @@
 </div>
 
 <script>
-  // Auto-hide alerts after 4 seconds — same behaviour as register.ejs
   document.addEventListener('DOMContentLoaded', () => {
     ['successAlert', 'errorAlert'].forEach(id => {
       const el = document.getElementById(id);

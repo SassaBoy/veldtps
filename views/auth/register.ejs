@@ -1,29 +1,51 @@
 <%- include('../partials/header') %>
 
 <style>
+  /* ── Reset ────────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
   .nm-auth-bg {
     min-height: 100vh;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    background: #0a1520;
-    background-image: radial-gradient(ellipse at 20% 50%, rgba(245,166,35,0.04) 0%, transparent 60%),
-                      radial-gradient(ellipse at 80% 20%, rgba(96,165,250,0.04) 0%, transparent 60%);
-    padding: 60px 16px 80px;
-    box-sizing: border-box;
+    background: #080f1a;
+    background-image:
+      radial-gradient(ellipse 70% 50% at 15% 40%, rgba(245,166,35,0.05) 0%, transparent 65%),
+      radial-gradient(ellipse 60% 40% at 85% 15%, rgba(96,165,250,0.05) 0%, transparent 65%);
+    padding: 120px 20px 80px;
   }
 
+  /* ── Card ─────────────────────────────────────────────────────────────── */
   .nm-auth-card {
     width: 100%;
-    max-width: 700px;
-    background: #0d1b2a;
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 18px;
-    padding: 48px 40px 40px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    max-width: 720px;
+    background: linear-gradient(145deg, #0d1b2a 0%, #0a1520 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 52px 48px 48px;
+    box-shadow:
+      0 32px 80px rgba(0,0,0,0.6),
+      0 0 0 1px rgba(255,255,255,0.03) inset,
+      0 1px 0 rgba(255,255,255,0.07) inset;
+    position: relative;
+    animation: slideUp 0.4s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .nm-auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(245,166,35,0.3), transparent);
   }
 
-  /* ── Autofill fix ────────────────────────────────────────────────────────── */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Autofill ─────────────────────────────────────────────────────────── */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,
@@ -31,124 +53,168 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: #ffffff !important;
     transition: background-color 5000s ease-in-out 0s;
-    box-shadow: inset 0 0 20px 20px #112235 !important;
+    box-shadow: inset 0 0 20px 20px #0e2035 !important;
   }
 
-  /* ── Brand ───────────────────────────────────────────────────────────────── */
-  .nm-auth-brand { text-align: center; margin-bottom: 36px; }
+  /* ── Brand ────────────────────────────────────────────────────────────── */
+  .nm-auth-brand { text-align: center; margin-bottom: 40px; }
   .nm-auth-brand-icon {
-    width: 52px; height: 52px; border-radius: 14px;
+    width: 56px; height: 56px; border-radius: 16px;
     background: linear-gradient(135deg, #f5a623, #d4880a);
     display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 14px; box-shadow: 0 4px 16px rgba(245,166,35,0.3);
+    margin: 0 auto 16px;
+    box-shadow: 0 6px 24px rgba(245,166,35,0.35), 0 0 0 1px rgba(245,166,35,0.2);
   }
-  .nm-auth-brand-icon i { font-size: 1.5rem; color: #fff; }
-  .nm-auth-title { font-family: 'Sora', sans-serif; font-size: 1.4rem; font-weight: 700; color: rgba(255,255,255,0.92); margin: 0 0 4px; }
-  .nm-auth-sub   { font-size: 0.85rem; color: rgba(255,255,255,0.4); margin: 0; }
+  .nm-auth-brand-icon i { font-size: 1.6rem; color: #fff; }
+  .nm-auth-title {
+    font-family: 'Sora', 'DM Sans', sans-serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: rgba(255,255,255,0.95); margin: 0 0 5px;
+    letter-spacing: -0.01em;
+  }
+  .nm-auth-sub { font-size: 0.84rem; color: rgba(255,255,255,0.38); margin: 0; }
 
-  /* ── Alert ───────────────────────────────────────────────────────────────── */
-  .nm-alert { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; border-radius: 9px; font-size: 0.845rem; margin-bottom: 20px; transition: opacity 0.5s ease; }
-  .nm-alert-danger { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22); color: #f87171; }
+  /* ── Alert ────────────────────────────────────────────────────────────── */
+  .nm-alert {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 13px 15px; border-radius: 11px;
+    font-size: 0.875rem; margin-bottom: 24px; line-height: 1.5;
+    transition: opacity 0.4s ease;
+  }
+  .nm-alert i { flex-shrink: 0; margin-top: 2px; }
+  .nm-alert-danger { background: rgba(248,113,113,0.09); border: 1px solid rgba(248,113,113,0.25); color: #f87171; }
 
-  /* ── Section labels ──────────────────────────────────────────────────────── */
+  /* ── Section labels ───────────────────────────────────────────────────── */
   .nm-section-label {
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.09em; color: rgba(255,255,255,0.25);
-    margin: 28px 0 14px; padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
     display: flex; align-items: center; gap: 8px;
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: rgba(255,255,255,0.28);
+    margin: 32px 0 18px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-  .nm-section-label i { font-size: 0.8rem; }
-  /* Badge showing which statutory form uses this section */
+  .nm-section-label i { font-size: 0.75rem; }
+
   .nm-form-badge {
-    font-size: 0.58rem; font-weight: 700; padding: 2px 7px; border-radius: 20px;
-    letter-spacing: 0.06em; text-transform: uppercase; margin-left: auto;
+    font-size: 0.57rem; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; letter-spacing: 0.06em; text-transform: uppercase; margin-left: auto;
   }
   .nm-form-badge.ssc   { background: rgba(96,165,250,0.1);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
   .nm-form-badge.namra { background: rgba(245,166,35,0.1);  color: #f5a623; border: 1px solid rgba(245,166,35,0.2); }
   .nm-form-badge.both  { background: rgba(167,139,250,0.1); color: #a78bfa; border: 1px solid rgba(167,139,250,0.2); }
   .nm-form-badge.bank  { background: rgba(46,204,138,0.1);  color: #2ecc8a; border: 1px solid rgba(46,204,138,0.2); }
 
-  /* ── Fields & inputs ─────────────────────────────────────────────────────── */
-  .nm-field  { margin-bottom: 0; }
-  .nm-label  { display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.65); margin-bottom: 6px; }
+  /* ── Fields ───────────────────────────────────────────────────────────── */
+  .nm-field { margin-bottom: 0; }
+  .nm-label { display: block; font-size: 0.79rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 7px; }
   .nm-required { color: #f5a623; }
-  .nm-optional { font-size: 0.68rem; font-weight: 400; color: rgba(255,255,255,0.3); margin-left: 4px; }
+  .nm-optional { font-size: 0.67rem; font-weight: 400; color: rgba(255,255,255,0.28); margin-left: 4px; }
 
+  /* ── Input wrappers ───────────────────────────────────────────────────── */
   .nm-input-wrap { position: relative; }
   .nm-input-wrap .nm-icon {
     position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-    font-size: 1rem; color: rgba(255,255,255,0.35); pointer-events: none; z-index: 2;
+    font-size: 0.95rem; color: rgba(255,255,255,0.32); pointer-events: none; z-index: 2;
   }
   .nm-input-wrap .nm-input { padding-left: 40px !important; }
   .nm-input-wrap.no-icon .nm-input { padding-left: 13px !important; }
 
   .nm-input {
     display: block; width: 100%; padding: 10px 13px;
-    background: #112235; border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 9px; color: rgba(255,255,255,0.92);
-    font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none;
-    transition: border-color 0.16s, box-shadow 0.16s;
+    background: #0e2035; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px; color: rgba(255,255,255,0.92);
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    outline: none; transition: border-color 0.18s, box-shadow 0.18s;
   }
-  .nm-input:focus { border-color: rgba(245,166,35,0.45); box-shadow: 0 0 0 3px rgba(245,166,35,0.08); }
-  .nm-input::placeholder { color: rgba(255,255,255,0.22); }
-  select.nm-input { appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='rgba(255,255,255,0.3)' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px; }
-
-  .nm-hint { font-size: 0.74rem; color: rgba(255,255,255,0.28); margin-top: 5px; line-height: 1.5; }
-  .nm-hint strong { color: rgba(255,255,255,0.45); }
-
-  /* ── Eye toggle ──────────────────────────────────────────────────────────── */
-  .nm-eye {
-    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
-    font-size: 1.1rem; color: rgba(255,255,255,0.4); cursor: pointer; z-index: 3;
-  }
-
-  /* ── Validation msgs ─────────────────────────────────────────────────────── */
-  .nm-validation-msg    { font-size: 0.75rem; margin-top: 5px; display: block; }
-  .nm-validation-success { color: #22c55e; }
-  .nm-validation-error   { color: #f87171; }
-
-  /* ── Inline field validation ─────────────────────────────────────────────── */
+  .nm-input:focus { border-color: rgba(245,166,35,0.5); box-shadow: 0 0 0 3px rgba(245,166,35,0.09); }
+  .nm-input::placeholder { color: rgba(255,255,255,0.2); }
   .nm-input.valid   { border-color: rgba(34,197,94,0.4); }
   .nm-input.invalid { border-color: rgba(248,113,113,0.45); }
 
-  /* ── Submit ──────────────────────────────────────────────────────────────── */
+  select.nm-input {
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 12 8'%3E%3Cpath fill='rgba(255,255,255,0.3)' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px;
+  }
+
+  /* ── Eye ──────────────────────────────────────────────────────────────── */
+  .nm-eye {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    font-size: 1.05rem; color: rgba(255,255,255,0.38); cursor: pointer; z-index: 3;
+    transition: color 0.15s;
+  }
+  .nm-eye:hover { color: rgba(255,255,255,0.7); }
+
+  /* ── Hints & validation ───────────────────────────────────────────────── */
+  .nm-hint { font-size: 0.73rem; color: rgba(255,255,255,0.27); margin-top: 5px; line-height: 1.5; }
+  .nm-hint strong { color: rgba(255,255,255,0.42); }
+  .nm-validation-msg { font-size: 0.74rem; margin-top: 5px; display: block; line-height: 1.4; }
+  .nm-validation-success { color: #22c55e; }
+  .nm-validation-error   { color: #f87171; }
+
+  /* ── Submit ───────────────────────────────────────────────────────────── */
   .nm-btn-submit {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; padding: 13px; border-radius: 9px;
+    width: 100%; padding: 14px; border-radius: 10px;
     background: linear-gradient(135deg, #f5a623, #e8981e);
     color: #1a0e00; font-family: 'DM Sans', sans-serif;
-    font-size: 0.925rem; font-weight: 700; border: none; cursor: pointer;
-    margin-top: 12px; transition: opacity 0.16s, transform 0.1s, box-shadow 0.16s;
+    font-size: 0.95rem; font-weight: 700;
+    border: none; cursor: pointer; margin-top: 32px;
+    transition: opacity 0.16s, transform 0.12s, box-shadow 0.16s;
+    box-shadow: 0 4px 18px rgba(245,166,35,0.25);
   }
-  .nm-btn-submit:hover { opacity: 0.93; transform: translateY(-1px); box-shadow: 0 5px 20px rgba(245,166,35,0.28); }
+  .nm-btn-submit:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245,166,35,0.35); }
+  .nm-btn-submit:active { transform: translateY(0); }
 
-  .nm-auth-footer { text-align: center; margin-top: 22px; font-size: 0.83rem; color: rgba(255,255,255,0.4); }
-  .nm-auth-footer a { color: #f5a623; font-weight: 600; text-decoration: none; }
-  .nm-auth-footer a:hover { text-decoration: underline; }
+  /* ── Auth footer ──────────────────────────────────────────────────────── */
+  .nm-auth-footer {
+    text-align: center; margin-top: 28px;
+    font-size: 0.83rem; color: rgba(255,255,255,0.38);
+    padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .nm-auth-footer a { color: #f5a623; font-weight: 600; text-decoration: none; transition: color 0.15s; }
+  .nm-auth-footer a:hover { color: #fff; text-decoration: underline; }
+
+  /* ── Responsive ───────────────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .nm-auth-bg { padding: 100px 16px 60px; }
+    .nm-auth-card { padding: 40px 28px 36px; }
+  }
+  @media (max-width: 576px) {
+    .nm-auth-bg { padding: 90px 14px 56px; }
+    .nm-auth-card { padding: 32px 20px 32px; border-radius: 16px; }
+    .nm-auth-title { font-size: 1.3rem; }
+    .nm-section-label { font-size: 0.63rem; margin: 28px 0 14px; }
+    .row.g-3 > .col-md-6,
+    .row.g-3 > .col-md-4,
+    .row.g-3 > .col-md-5,
+    .row.g-3 > .col-md-3 { flex: 0 0 100%; max-width: 100%; }
+    .nm-form-badge { display: none; }
+  }
+  @media (max-width: 360px) {
+    .nm-auth-card { padding: 26px 16px 28px; }
+    .nm-auth-brand-icon { width: 48px; height: 48px; }
+  }
 </style>
 
-<div class="nm-auth-bg">
+<div class="nm-auth-bg" style="margin-top: -100px;">
   <div class="nm-auth-card">
 
     <div class="nm-auth-brand">
       <div class="nm-auth-brand-icon"><i class="bi bi-building-add"></i></div>
       <h1 class="nm-auth-title">Create Company Account</h1>
-      <p class="nm-auth-sub">Set up your NamPayroll account in minutes</p>
+      <p class="nm-auth-sub">Set up your VPS payroll account in minutes</p>
     </div>
 
     <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
       <div class="nm-alert nm-alert-danger" id="errorAlert">
-        <i class="bi bi-exclamation-circle-fill" style="flex-shrink:0;margin-top:2px;"></i>
+        <i class="bi bi-exclamation-circle-fill"></i>
         <div><% errors.forEach(e => { %><div>• <%= e.msg %></div><% }) %></div>
       </div>
     <% } %>
 
     <form action="/register" method="POST" enctype="multipart/form-data" id="registerForm" novalidate>
 
-      <!-- ══ 1. PERSONAL INFORMATION ═══════════════════════════════════════ -->
+      <!-- 1. PERSONAL INFORMATION -->
       <div class="nm-section-label">
         <i class="bi bi-person-fill"></i> Personal Information
         <span class="nm-form-badge both">All Forms</span>
@@ -176,13 +242,12 @@
         </div>
       </div>
 
-      <!-- ══ 2. COMPANY INFORMATION ════════════════════════════════════════ -->
+      <!-- 2. COMPANY INFORMATION -->
       <div class="nm-section-label">
         <i class="bi bi-building-fill"></i> Company Information
         <span class="nm-form-badge both">SSC · NamRA · All Forms</span>
       </div>
       <div class="row g-3">
-
         <div class="col-12">
           <div class="nm-field">
             <label class="nm-label">Company / CC / Business Name <span class="nm-required">*</span></label>
@@ -194,7 +259,6 @@
             <div class="nm-hint">Appears as "Name of Employer" on SSC Form 10(a) and all statutory documents.</div>
           </div>
         </div>
-
         <div class="col-md-6">
           <div class="nm-field">
             <label class="nm-label">Number of Employees <span class="nm-required">*</span></label>
@@ -210,7 +274,6 @@
             </div>
           </div>
         </div>
-
         <div class="col-md-6">
           <div class="nm-field">
             <label class="nm-label">Telephone <span class="nm-required">*</span></label>
@@ -221,7 +284,6 @@
             </div>
           </div>
         </div>
-
         <div class="col-md-6">
           <div class="nm-field">
             <label class="nm-label">Email Address <span class="nm-required">*</span></label>
@@ -233,25 +295,22 @@
             <div class="nm-hint">Appears as "Email Address" on SSC Form 10(a) field 4.</div>
           </div>
         </div>
-
         <div class="col-md-6">
           <div class="nm-field">
             <label class="nm-label">Company Logo <span class="nm-optional">(optional)</span></label>
             <input type="file" name="companyLogo" class="nm-input" accept="image/*"
-              style="padding: 8px 10px; cursor:pointer;" />
-            <div class="nm-hint">Printed on payslip PDFs. PNG or JPG, max 2MB.</div>
+              style="padding: 8px 10px; cursor: pointer;" />
+            <div class="nm-hint">Printed on payslip PDFs. PNG or JPG, max 2 MB.</div>
           </div>
         </div>
-
       </div>
 
-      <!-- ══ 3. ADDRESS ════════════════════════════════════════════════════ -->
+      <!-- 3. ADDRESS -->
       <div class="nm-section-label">
         <i class="bi bi-geo-alt-fill"></i> Address Details
         <span class="nm-form-badge ssc">SSC Form 10(a)</span>
       </div>
       <div class="row g-3">
-
         <div class="col-12">
           <div class="nm-field">
             <label class="nm-label">Postal Address <span class="nm-required">*</span></label>
@@ -263,7 +322,6 @@
             <div class="nm-hint">Required for <strong>SSC Form 10(a) field 3</strong>. Use your P.O. Box or Private Bag number.</div>
           </div>
         </div>
-
         <div class="col-12">
           <div class="nm-field">
             <label class="nm-label">Physical / Street Address <span class="nm-optional">(optional)</span></label>
@@ -275,69 +333,60 @@
             <div class="nm-hint">Used on compliance reports and payslip letterheads.</div>
           </div>
         </div>
-
       </div>
 
-      <!-- ══ 4. STATUTORY REGISTRATION NUMBERS ════════════════════════════ -->
+      <!-- 4. STATUTORY REGISTRATION -->
       <div class="nm-section-label">
         <i class="bi bi-file-earmark-text-fill"></i> Statutory Registration Numbers
         <span class="nm-form-badge namra">NamRA · SSC</span>
       </div>
-      <div class="nm-hint" style="margin:-6px 0 14px; font-size:0.78rem; color:rgba(255,255,255,0.32);">
+      <div class="nm-hint" style="margin: -6px 0 16px; font-size: 0.75rem; color: rgba(255,255,255,0.28);">
         You can add these now or fill them in later from your Settings page. They are required before generating statutory documents.
       </div>
       <div class="row g-3">
-
         <div class="col-md-4">
           <div class="nm-field">
             <label class="nm-label">NamRA TIN <span class="nm-optional">(optional)</span></label>
             <div class="nm-input-wrap no-icon">
               <input type="text" name="tinNumber" id="tinField" class="nm-input"
-                placeholder="1234567890"
-                maxlength="10" inputmode="numeric"
+                placeholder="1234567890" maxlength="10" inputmode="numeric"
                 value="<%= formData.tinNumber || '' %>" />
             </div>
-            <div class="nm-hint">10-digit Taxpayer Identification Number. Required for <strong>ETX/PAYE4</strong> and <strong>PAYE5</strong> certificates.</div>
+            <div class="nm-hint">10-digit Taxpayer Identification Number. Required for <strong>ETX/PAYE4</strong> and <strong>PAYE5</strong>.</div>
             <span class="nm-validation-msg" id="tinMsg"></span>
           </div>
         </div>
-
         <div class="col-md-4">
           <div class="nm-field">
             <label class="nm-label">PAYE Registration No. <span class="nm-optional">(optional)</span></label>
             <div class="nm-input-wrap no-icon">
               <input type="text" name="payeRegNo" class="nm-input"
-                placeholder="PAYE reg. number"
-                value="<%= formData.payeRegNo || '' %>" />
+                placeholder="PAYE reg. number" value="<%= formData.payeRegNo || '' %>" />
             </div>
-            <div class="nm-hint">Employer PAYE registration issued by NamRA. Printed on <strong>PAYE5/ITA5</strong> certificates.</div>
+            <div class="nm-hint">Employer PAYE registration issued by NamRA. Printed on <strong>PAYE5/ITA5</strong>.</div>
           </div>
         </div>
-
         <div class="col-md-4">
           <div class="nm-field">
             <label class="nm-label">SSC Employer Reg. No. <span class="nm-optional">(optional)</span></label>
             <div class="nm-input-wrap no-icon">
               <input type="text" name="sscNumber" class="nm-input"
-                placeholder="SSC registration number"
-                value="<%= formData.sscNumber || '' %>" />
+                placeholder="SSC registration number" value="<%= formData.sscNumber || '' %>" />
             </div>
-            <div class="nm-hint">Issued by the Social Security Commission. Required on <strong>Form 10(a) field 2</strong>.</div>
+            <div class="nm-hint">Issued by SSC. Required on <strong>Form 10(a) field 2</strong>.</div>
           </div>
         </div>
-
       </div>
 
-      <!-- ══ 5. BANKING DETAILS ════════════════════════════════════════════ -->
+      <!-- 5. BANKING -->
       <div class="nm-section-label">
         <i class="bi bi-bank2"></i> Company Banking Details
         <span class="nm-form-badge bank">Bank Transfer CSV</span>
       </div>
-      <div class="nm-hint" style="margin:-6px 0 14px; font-size:0.78rem; color:rgba(255,255,255,0.32);">
-        Used in the bank transfer CSV header for your payroll disbursement file. Optional — can be completed later.
+      <div class="nm-hint" style="margin: -6px 0 16px; font-size: 0.75rem; color: rgba(255,255,255,0.28);">
+        Used in the bank transfer CSV header for payroll disbursement. Optional — can be completed later.
       </div>
       <div class="row g-3">
-
         <div class="col-md-5">
           <div class="nm-field">
             <label class="nm-label">Bank Name <span class="nm-optional">(optional)</span></label>
@@ -350,7 +399,6 @@
             </select>
           </div>
         </div>
-
         <div class="col-md-4">
           <div class="nm-field">
             <label class="nm-label">Account Number <span class="nm-optional">(optional)</span></label>
@@ -361,7 +409,6 @@
             </div>
           </div>
         </div>
-
         <div class="col-md-3">
           <div class="nm-field">
             <label class="nm-label">Branch Code <span class="nm-optional">(optional)</span></label>
@@ -370,42 +417,40 @@
                 placeholder="e.g. 280172" inputmode="numeric"
                 value="<%= formData.bankBranchCode || '' %>" />
             </div>
-            <div class="nm-hint">FNB: 280172 · Standard: 082772 · BW: 483872</div>
+            <div class="nm-hint">FNB: 280172 · Std: 082772 · BW: 483872</div>
           </div>
         </div>
-
       </div>
 
-      <!-- ══ 6. SECURITY ═══════════════════════════════════════════════════ -->
+      <!-- 6. SECURITY -->
       <div class="nm-section-label">
         <i class="bi bi-shield-lock-fill"></i> Account Security
       </div>
       <div class="row g-3">
-
         <div class="col-md-6">
           <div class="nm-field">
             <label class="nm-label">Password <span class="nm-required">*</span></label>
             <div class="nm-input-wrap">
               <i class="bi bi-lock nm-icon"></i>
-              <input type="password" name="password" id="password" class="nm-input" required />
-              <i class="bi bi-eye-slash nm-eye" id="togglePassword"></i>
+              <input type="password" name="password" id="password" class="nm-input"
+                placeholder="Min. 8 characters" required autocomplete="new-password" />
+              <i class="bi bi-eye-slash nm-eye" id="togglePassword" role="button"></i>
             </div>
             <span class="nm-validation-msg" id="passwordMsg"></span>
           </div>
         </div>
-
         <div class="col-md-6">
           <div class="nm-field">
             <label class="nm-label">Confirm Password <span class="nm-required">*</span></label>
             <div class="nm-input-wrap">
               <i class="bi bi-lock nm-icon"></i>
-              <input type="password" name="confirmPassword" id="confirmPassword" class="nm-input" required />
-              <i class="bi bi-eye-slash nm-eye" id="toggleConfirm"></i>
+              <input type="password" name="confirmPassword" id="confirmPassword" class="nm-input"
+                placeholder="Repeat password" required autocomplete="new-password" />
+              <i class="bi bi-eye-slash nm-eye" id="toggleConfirm" role="button"></i>
             </div>
             <span class="nm-validation-msg" id="confirmMsg"></span>
           </div>
         </div>
-
       </div>
 
       <button type="submit" class="nm-btn-submit">
@@ -415,13 +460,13 @@
     </form>
 
     <div class="nm-auth-footer">
-      <p>Already have an account? <a href="/login">Log in here</a></p>
+      Already have an account? <a href="/login">Log in here</a>
     </div>
 
   </div>
 </div>
 
-<%- include('../partials/footer') %>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -434,15 +479,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const tinMsg     = document.getElementById('tinMsg');
   const errorAlert = document.getElementById('errorAlert');
 
-  // ── Auto-hide error alert after 5 seconds ────────────────────────────────
+  // Auto-hide error alert
   if (errorAlert) {
     setTimeout(() => {
       errorAlert.style.opacity = '0';
-      setTimeout(() => errorAlert.style.display = 'none', 500);
+      setTimeout(() => errorAlert.style.display = 'none', 450);
     }, 5000);
   }
 
-  // ── Eye icon toggles ──────────────────────────────────────────────────────
+  // Eye toggles
   [{ btn: 'togglePassword', el: 'password' }, { btn: 'toggleConfirm', el: 'confirmPassword' }]
     .forEach(({ btn, el }) => {
       const icon  = document.getElementById(btn);
@@ -457,40 +502,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-  // ── TIN validation (10 digits) ────────────────────────────────────────────
-  tinField.addEventListener('input', function () {
-    const val = this.value.replace(/\D/g, '');
-    this.value = val;
-    this.classList.remove('valid', 'invalid');
-    tinMsg.textContent = '';
-    if (!val) return;
-    if (val.length !== 10) {
-      tinMsg.textContent = `TIN must be exactly 10 digits (currently ${val.length})`;
-      tinMsg.className = 'nm-validation-msg nm-validation-error';
-      this.classList.add('invalid');
-    } else {
-      tinMsg.textContent = '✓ Valid TIN format';
-      tinMsg.className = 'nm-validation-msg nm-validation-success';
-      this.classList.add('valid');
-    }
-  });
+  // TIN validation
+  if (tinField) {
+    tinField.addEventListener('input', function () {
+      const val = this.value.replace(/\D/g, '');
+      this.value = val;
+      this.classList.remove('valid', 'invalid');
+      tinMsg.textContent = '';
+      if (!val) return;
+      if (val.length !== 10) {
+        tinMsg.textContent = `TIN must be exactly 10 digits (currently ${val.length})`;
+        tinMsg.className = 'nm-validation-msg nm-validation-error';
+        this.classList.add('invalid');
+      } else {
+        tinMsg.textContent = '✓ Valid TIN format';
+        tinMsg.className = 'nm-validation-msg nm-validation-success';
+        this.classList.add('valid');
+      }
+    });
+  }
 
-  // ── Password strength + match ─────────────────────────────────────────────
+  // Password validation
   const validate = () => {
-    const v = pw.value;
-    const c = confirmPw.value;
-
+    const v = pw.value, c = confirmPw.value;
     if (v.length > 0) {
       const strong = v.length >= 8;
-      pwMsg.textContent  = strong ? '✓ Strength: Good' : 'Too short — minimum 8 characters';
-      pwMsg.className    = 'nm-validation-msg ' + (strong ? 'nm-validation-success' : 'nm-validation-error');
+      pwMsg.textContent = strong ? '✓ Strength: Good' : 'Too short — minimum 8 characters';
+      pwMsg.className   = 'nm-validation-msg ' + (strong ? 'nm-validation-success' : 'nm-validation-error');
       pw.classList.toggle('valid',   strong);
       pw.classList.toggle('invalid', !strong);
     } else {
       pwMsg.textContent = '';
       pw.classList.remove('valid', 'invalid');
     }
-
     if (c.length > 0) {
       const match = v === c;
       confirmMsg.textContent = match ? '✓ Passwords match' : 'Passwords do not match';
@@ -506,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
   pw.addEventListener('input', validate);
   confirmPw.addEventListener('input', validate);
 
-  // ── Submit guard ──────────────────────────────────────────────────────────
+  // Submit guard
   form.addEventListener('submit', e => {
     if (pw.value.length < 8 || pw.value !== confirmPw.value) {
       e.preventDefault();
@@ -520,23 +564,20 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmMsg.className = 'nm-validation-msg nm-validation-error';
         confirmPw.classList.add('invalid');
       }
-      pw.focus();
+      pw.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-
-    const tinVal = tinField.value.trim();
+    const tinVal = tinField ? tinField.value.trim() : '';
     if (tinVal && !/^\d{10}$/.test(tinVal)) {
       e.preventDefault();
       tinMsg.textContent = 'TIN must be exactly 10 digits';
       tinMsg.className = 'nm-validation-msg nm-validation-error';
       tinField.classList.add('invalid');
-      tinField.focus();
+      tinField.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-
-    // Show loading state
     const btn = form.querySelector('.nm-btn-submit');
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Creating account…';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Creating account…';
     btn.style.pointerEvents = 'none';
     btn.style.opacity = '0.75';
   });

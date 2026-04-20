@@ -1,120 +1,104 @@
-/**
- * Subscription Model – NamPayroll
- * ─────────────────────────────────────────────────────────────────────────────
- * Tracks each company's subscription plan, status, payment history,
- * and pending payment requests.
- *
- * Billing limit enforcement is now done by counting completed PayrollRun documents,
- * so payslipsUsed counter is no longer used.
- */
-
+'use strict';
 const mongoose = require('mongoose');
 const moment = require('moment-timezone');
 
-// ── Payment record sub-document ───────────────────────────────────────────────
-const paymentSchema = new mongoose.Schema({
-  amount:       { type: Number, required: true },               // Amount in NAD
-  currency:     { type: String, default: 'NAD' },
-  method:       { type: String, default: 'Bank Transfer' },     // Can be extended later (Stripe, etc.)
-  reference:    { type: String },                               // Bank reference or transaction ID
-  proofUrl:     { type: String },                               // Path to uploaded proof file
-  period:       { type: String },                               // e.g. '2025-01'
-  status:       { 
-    type: String, 
-    enum: ['pending', 'verified', 'rejected'], 
-    default: 'pending' 
-  },
-  verifiedAt:   { type: Date },
-  verifiedBy:   { type: String },                               // Admin email who verified
-  note:         { type: String },                               // Rejection/admin note
-  createdAt:    { type: Date, default: Date.now }
-}, { _id: true });
-
-// ── Main subscription schema ──────────────────────────────────────────────────
 const subscriptionSchema = new mongoose.Schema({
-  company: {
-    type:     mongoose.Schema.Types.ObjectId,
-    ref:      'User',
-    required: true,
-    unique:   true,           // One subscription per company
-    index:    true
-  },
-
-  // Plan type
-  plan: {
-    type:     String,
-    enum:     ['trial', 'monthly', 'annual'],
-    default:  'trial'
-  },
-
-  // Subscription status
-  status: {
-    type:     String,
-    enum:     ['active', 'pending_payment', 'expired', 'cancelled', 'suspended'],
-    default:  'active'
-  },
-
-  // Trial start (for display/reference only)
-  trialStartedAt: {
-    type:     Date,
-    default:  Date.now
-  },
-
-  // Paid period tracking
+  company: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+  plan: { type: String, enum: ['trial', 'monthly', 'annual'], default: 'trial' },
+  status: { type: String, enum: ['active', 'expired', 'cancelled', 'pending_payment'], default: 'active' },
   currentPeriodStart: { type: Date },
-  currentPeriodEnd:   { type: Date },     // null for lifetime / indefinite plans
-  cancelledAt:        { type: Date },
-
-  // Pricing at time of purchase (snapshot)
-  pricingSnapshot: {
-    monthlyRate: { type: Number },
-    annualRate:  { type: Number },
-    currency:    { type: String, default: 'NAD' }
+  currentPeriodEnd: { type: Date },
+  
+  pendingRequest: {
+    plan: String,
+    amount: Number,
+    proofUrl: String,
+    reference: String,
+    submittedAt: Date
   },
 
-  // Payment & request history
-  payments: [paymentSchema],
-
-  // Current pending upgrade/payment request (awaiting admin approval)
-  pendingRequest: {
-    plan:        { type: String, enum: ['monthly', 'annual'] },
-    amount:      { type: Number },
-    proofUrl:    { type: String },
-    reference:   { type: String },
-    submittedAt: { type: Date }
+  cycleHistory: {
+    type: [{
+      cycleNumber: Number,
+      startDate: Date,
+      endDate: Date,
+      status: { type: String, default: 'active' },
+      remindersSent: { 
+        threeDayNotice: { type: Boolean, default: false } // Renamed for production clarity
+      }
+    }],
+    default: []
+  },
+  
+  payments: {
+    type: [{
+      amount: Number,
+      method: String,
+      reference: String,
+      proofUrl: String,
+      status: String,
+      verifiedAt: Date
+    }],
+    default: []
   }
-
 }, { timestamps: true });
 
-// ── Virtuals ──────────────────────────────────────────────────────────────────
+subscriptionSchema.methods.getCurrentCycle = function() {
+  if (!this.cycleHistory || this.cycleHistory.length === 0) return null;
+  return this.cycleHistory[this.cycleHistory.length - 1];
+};
 
-/**
- * daysUntilExpiry
- * How many days remain until the current paid period ends (for monthly/annual plans)
- */
-subscriptionSchema.virtual('daysUntilExpiry').get(function () {
-  if (!this.currentPeriodEnd) return null;
-  const diff = new Date(this.currentPeriodEnd) - new Date();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-});
+subscriptionSchema.methods.startNewCycle = function(plan, amount) {
+  const now = new Date();
+  let endDate;
 
-/**
- * isCurrentlyActive (convenience virtual)
- * True if the subscription allows payroll processing right now
- */
-subscriptionSchema.virtual('isCurrentlyActive').get(function () {
-  if (this.status !== 'active') return false;
-
-  // For paid plans: check expiry
-  if (this.plan !== 'trial' && this.currentPeriodEnd) {
-    return new Date() < new Date(this.currentPeriodEnd);
+  // PRODUCTION LOGIC: Monthly = 30 days, Annual = 365 days
+  if (plan === 'annual') {
+    endDate = moment(now).add(365, 'days').toDate();
+  } else {
+    endDate = moment(now).add(30, 'days').toDate();
   }
 
-  // Trial: always relies on run count in middleware — no virtual limit here anymore
-  return true;
-});
+  this.cycleHistory.push({
+    cycleNumber: (this.cycleHistory ? this.cycleHistory.length : 0) + 1,
+    startDate: now,
+    endDate: endDate,
+    remindersSent: { threeDayNotice: false }
+  });
 
-subscriptionSchema.set('toJSON',   { virtuals: true });
-subscriptionSchema.set('toObject', { virtuals: true });
+  this.currentPeriodStart = now;
+  this.currentPeriodEnd = endDate;
+  this.plan = plan;
+  this.status = 'active';
+  return this;
+};
+
+subscriptionSchema.methods.getReminderStatus = function() {
+  const cycle = this.getCurrentCycle();
+  if (!cycle || this.status !== 'active' || cycle.remindersSent.threeDayNotice) return null;
+
+  const diffInDays = moment(this.currentPeriodEnd).diff(moment(), 'days');
+  
+  // Send reminder when there are 3 days or fewer remaining
+  if (diffInDays <= 3 && diffInDays >= 0) {
+    return '3_day_warning';
+  }
+  return null;
+};
+
+subscriptionSchema.methods.markReminderSent = function(type) {
+  const cycle = this.getCurrentCycle();
+  if (cycle && type === '3_day_warning') {
+    cycle.remindersSent.threeDayNotice = true;
+    this.markModified('cycleHistory');
+  }
+};
+
+subscriptionSchema.statics.findSubscriptionsNeedingReminders = async function() {
+  const subs = await this.find({ status: 'active' }).populate('company');
+  return subs
+    .filter(s => s.getReminderStatus() === '3_day_warning')
+    .map(s => ({ sub: s, reminderType: '3_day_warning' }));
+};
 
 module.exports = mongoose.model('Subscription', subscriptionSchema);

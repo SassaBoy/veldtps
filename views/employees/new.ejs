@@ -20,22 +20,60 @@
   .nm-back-btn { width:38px; height:38px; border-radius:9px; border:1px solid rgba(255,255,255,0.07); background:#1a2f45; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.65); text-decoration:none; transition:0.16s; flex-shrink:0; }
   .nm-back-btn:hover { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.92); }
 
-  .nm-btn-primary { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:9px; background:#f5a623; color:#1a0e00; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:700; border:none; cursor:pointer; transition:0.2s; }
-  .nm-btn-primary:hover { background:#e8981e; transform:translateY(-1px); box-shadow:0 4px 15px rgba(245,166,35,0.2); }
-  .nm-btn-ghost   { padding:9px 18px; border-radius:9px; border:1px solid rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); text-decoration:none; font-size:0.875rem; transition:0.16s; display:inline-flex; align-items:center; gap:7px; }
-  .nm-btn-ghost:hover { background:rgba(255,255,255,0.04); color:#fff; }
+  .nm-btn-primary { 
+    display:inline-flex; align-items:center; gap:8px; 
+    padding:10px 24px; border-radius:9px; 
+    background:#f5a623; color:#1a0e00; 
+    font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:700; 
+    border:none; cursor:pointer; transition:0.2s; 
+  }
+  .nm-btn-primary:hover { 
+    background:#e8981e; 
+    transform:translateY(-1px); 
+    box-shadow:0 4px 15px rgba(245,166,35,0.2); 
+  }
+
+  .nm-btn-ghost { 
+    padding:9px 18px; border-radius:9px; 
+    border:1px solid rgba(255,255,255,0.15); 
+    color:rgba(255,255,255,0.85); 
+    background: rgba(255,255,255,0.06);
+    text-decoration:none; 
+    font-size:0.875rem; 
+    transition:0.16s; 
+    display:inline-flex; 
+    align-items:center; 
+    gap:7px; 
+  }
+  .nm-btn-ghost:hover { 
+    background:rgba(255,255,255,0.12); 
+    color:#fff; 
+    border-color: rgba(255,255,255,0.25);
+  }
 
   /* ── CSV import toolbar ─────────────────────────────────────────────────── */
   .nm-import-bar {
     display: flex; align-items: center; justify-content: space-between;
-    background: #071421; border: 1px solid rgba(96,165,250,0.2);
-    border-radius: 11px; padding: 12px 18px; margin-bottom: 24px; gap: 12px;
+    background: #071421; 
+    border: 1px solid rgba(245,166,35,0.25);
+    border-radius: 11px; 
+    padding: 12px 18px; 
+    margin-bottom: 24px; 
+    gap: 12px;
     flex-wrap: wrap;
   }
   .nm-import-bar-left { display:flex; align-items:center; gap:10px; }
   .nm-import-bar-title { font-size:0.875rem; font-weight:600; color:rgba(255,255,255,0.75); }
   .nm-import-bar-sub   { font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:2px; }
-  .nm-import-icon { width:36px; height:36px; background:rgba(96,165,250,0.1); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#60a5fa; flex-shrink:0; font-size:1rem; }
+  .nm-import-icon { 
+    width:36px; height:36px; 
+    background:rgba(245,166,35,0.12); 
+    border-radius:8px; 
+    display:flex; align-items:center; justify-content:center; 
+    color:#f5a623; 
+    flex-shrink:0; 
+    font-size:1rem; 
+  }
 
   /* ── Form cards ─────────────────────────────────────────────────────────── */
   .nm-form-card { background:#0d1b2a; border:1px solid rgba(255,255,255,0.07); border-radius:14px; margin-bottom:20px; overflow:hidden; }
@@ -116,13 +154,15 @@
         <button type="button" onclick="downloadCSVTemplate()" class="nm-btn-ghost">
           <i class="bi bi-download"></i> Download Template
         </button>
-        <button type="button" class="nm-btn-ghost" style="color:#60a5fa; border-color:rgba(96,165,250,0.25);"
+        <button type="button" class="nm-btn-primary"
           onclick="document.getElementById('csvBulkInput').click()">
           <i class="bi bi-upload"></i> Import CSV
         </button>
-        <form id="csvImportForm" action="/employees/import-csv" method="POST" enctype="multipart/form-data" style="display:none;">
-          <input type="file" id="csvBulkInput" name="csvFile" accept=".csv" onchange="submitCSVImport()">
-        </form>
+      <form id="csvImportForm" action="/employees/import-csv" method="POST" enctype="multipart/form-data" style="display:none;">
+  <input type="file" id="csvBulkInput" name="csvFile" 
+    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" 
+    onchange="submitCSVImport()">
+</form>
       </div>
     </div>
 
@@ -316,6 +356,90 @@
                 placeholder="0.00" />
             </div>
 
+            <!-- NEW: PROVIDENT FUND SECTION -->
+            <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Provident Fund</div></div>
+
+            <div class="col-md-5">
+              <label class="nm-label">Provident Fund Name</label>
+              <input type="text" name="providentFundName" class="nm-input"
+                value="<%= formData.providentFundName || '' %>"
+                placeholder="e.g., Standard Provident Fund" />
+              <p class="nm-hint">Name of the approved provident fund (if applicable).</p>
+            </div>
+            <div class="col-md-4">
+              <label class="nm-label">Registration Number</label>
+              <input type="text" name="providentFundRegNo" class="nm-input"
+                value="<%= formData.providentFundRegNo || '' %>"
+                placeholder="e.g., P-12345" />
+              <p class="nm-hint">Fund registration number from NamRA.</p>
+            </div>
+            <div class="col-md-3">
+              <label class="nm-label">Monthly Contribution (N$)</label>
+              <div class="nm-input-group">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="providentFundContribution" class="nm-input"
+                  placeholder="0.00" step="0.01" min="0"
+                  value="<%= formData.providentFundContribution || 0 %>">
+              </div>
+              <p class="nm-hint">Monthly amount — reduces taxable income before PAYE (s17, Income Tax Act).</p>
+            </div>
+
+            <!-- NEW: RETIREMENT FUND SECTION -->
+            <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Retirement Fund</div></div>
+
+            <div class="col-md-5">
+              <label class="nm-label">Retirement Fund Name</label>
+              <input type="text" name="retirementFundName" class="nm-input"
+                value="<%= formData.retirementFundName || '' %>"
+                placeholder="e.g., Sanlam Retirement Annuity" />
+              <p class="nm-hint">Name of the approved retirement/RA fund.</p>
+            </div>
+            <div class="col-md-4">
+              <label class="nm-label">Registration Number</label>
+              <input type="text" name="retirementFundRegNo" class="nm-input"
+                value="<%= formData.retirementFundRegNo || '' %>"
+                placeholder="e.g., R-67890" />
+              <p class="nm-hint">Fund registration number from NamRA.</p>
+            </div>
+            <div class="col-md-3">
+              <label class="nm-label">Monthly Contribution (N$)</label>
+              <div class="nm-input-group">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="retirementFundContribution" class="nm-input"
+                  placeholder="0.00" step="0.01" min="0"
+                  value="<%= formData.retirementFundContribution || 0 %>">
+              </div>
+              <p class="nm-hint">Monthly amount — reduces taxable income before PAYE (s17, Income Tax Act).</p>
+            </div>
+
+            <!-- NEW: STUDY POLICY SECTION -->
+            <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Study Policy</div></div>
+
+            <div class="col-md-5">
+              <label class="nm-label">Study Policy Name</label>
+              <input type="text" name="studyPolicyName" class="nm-input"
+                value="<%= formData.studyPolicyName || '' %>"
+                placeholder="e.g., Employee Bursary Scheme" />
+              <p class="nm-hint">Name of the approved study/bursary policy.</p>
+            </div>
+            <div class="col-md-4">
+              <label class="nm-label">Registration Number</label>
+              <input type="text" name="studyPolicyRegNo" class="nm-input"
+                value="<%= formData.studyPolicyRegNo || '' %>"
+                placeholder="e.g., S-11111" />
+              <p class="nm-hint">Policy registration number from NamRA.</p>
+            </div>
+            <div class="col-md-3">
+              <label class="nm-label">Monthly Contribution (N$)</label>
+              <div class="nm-input-group">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="studyPolicyContribution" class="nm-input"
+                  placeholder="0.00" step="0.01" min="0"
+                  value="<%= formData.studyPolicyContribution || 0 %>">
+              </div>
+              <p class="nm-hint">Monthly amount — reduces taxable income before PAYE (s17, Income Tax Act).</p>
+            </div>
+
             <!-- Fringe Benefits -->
             <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Fringe Benefits</div></div>
 
@@ -479,7 +603,7 @@ if (!dateField.value) dateField.valueAsDate = new Date();
 
 // ── Namibian ID validation (11 digits, YYMMDDSSSSQ) ───────────────────────────
 idField.addEventListener('input', function () {
-  const val = this.value.replace(/\D/g, '');
+  const val = this.value.trim().replace(/\D/g, '');
   this.value = val; // strip non-digits live
 
   idError.style.display = 'none';
@@ -524,7 +648,7 @@ idField.addEventListener('input', function () {
 
 // ── TIN validation (10 digits) ────────────────────────────────────────────────
 tinField.addEventListener('input', function () {
-  const val = this.value.replace(/\D/g, '');
+  const val = this.value.trim().replace(/\D/g, '');
   this.value = val;
   tinError.style.display = 'none';
   this.classList.remove('invalid', 'valid');
@@ -540,13 +664,12 @@ tinField.addEventListener('input', function () {
 
 // ── Phone validation (Namibian, 8–9 digits after +264) ───────────────────────
 phoneField.addEventListener('input', function () {
-  const val = this.value.replace(/\D/g, '');
+  const val = this.value.trim().replace(/\D/g, '');
   this.value = val;
   phoneError.style.display = 'none';
   this.classList.remove('invalid', 'valid');
   if (!val) return;
 
-  // Valid Namibian prefixes (after +264): 81, 85 (MTC) · 60, 61 (TN Mobile) · 64 (landline Windhoek) · 63, 65, 67 etc.
   const validPrefixes = ['81','85','86','87','60','61','62','63','64','65','66','67'];
   const prefix2 = val.slice(0, 2);
   if (!validPrefixes.includes(prefix2)) {
@@ -598,35 +721,43 @@ function submitCSVImport() {
 }
 
 function downloadCSVTemplate() {
-  const header = [
-    'Full Name','ID Number','TIN','SSC Number','Email','Phone',
-    'Position','Department','Basic Salary','Date Joined',
-    'Annual Leave','Sick Leave',
-    'Pension Fund','Pension Reg No','Pension Contribution',
-    'Medical Aid Fund','Medical Aid No','Medical Aid Contribution',
-    'Has Vehicle (yes/no)','Housing Type (none/free/subsidised)',
-    'Bank Name','Account Number','Branch Code','Account Type (cheque/savings/transmission)'
-  ].join(',');
+  const headers = [
+    'fullName','idNumber','tinNumber','socialSecurityNumber','email','phone',
+    'position','department','basicSalary','dateJoined',
+    'annualLeaveBalance','sickLeaveBalance',
+    'pensionFundName','pensionFundRegNo','pensionContribution',
+    'medicalAidFundName','medicalAidMemberNo','medicalAidContribution',
+    'providentFundName','providentFundRegNo','providentFundContribution',
+    'retirementFundName','retirementFundRegNo','retirementFundContribution',
+    'studyPolicyName','studyPolicyRegNo','studyPolicyContribution',
+    'hasCompanyVehicle','housingType','bankName','bankAccountNumber','bankBranchCode','accountType'
+  ];
 
-  const example = [
-    'Johannes Nghifikepunye','95010100453','1234567890','SSC123456',
-    'johannes@company.na','81234567',
-    'Farm Manager','Operations','15000','2024-01-15',
+  // Note: I used the camelCase keys here to match exactly what your 
+  // backend controller expects (row.fullName, row.idNumber, etc.)
+  const headerRow = headers.join(',');
+
+  const exampleRow = [
+    'Johannes Mutorwa','95010100453','1234567890','SSC123456','johannes@company.na','81234567',
+    'Manager','Ops','15000','2024-01-15',
     '24','30',
     'GIPF','REG001','750',
     'NHP','M12345','300',
-    'no','none',
-    'First National Bank (FNB)','62012345678','280172','cheque'
+    'Standard Provident','P-12345','450',
+    'Sanlam Retirement','R-67890','1200',
+    'Bursary Scheme','S-11111','350',
+    'no','none','First National Bank (FNB)','62012345678','280172','cheque'
   ].join(',');
 
-  const csv  = header + '\n' + example + '\n';
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = 'nampayroll_employee_import_template.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  const csvContent = headerRow + '\n' + exampleRow + '\n';
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "veldt_import_template.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 </script>
 

@@ -2,7 +2,29 @@
 <%- include('../partials/navbar') %>
 
 <style>
-  .nm-page-wrapper { flex: 1; padding: 32px 24px 48px; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nm-app-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .nm-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nm-page-wrapper { 
+    flex: 1;
+    padding: 32px 24px 80px; 
+    background: #070e18;
+  }
   .nm-page-inner { max-width: 1280px; margin: 0 auto; }
 
   .nm-page-header {
@@ -15,28 +37,38 @@
     font-weight: 700; color: rgba(255,255,255,0.92);
     margin: 0; letter-spacing: -0.02em;
   }
-  .nm-page-subtitle { font-size: 0.875rem; color: rgba(255,255,255,0.4); margin: 4px 0 0; }
+  .nm-page-subtitle { 
+    font-size: 0.875rem; 
+    color: rgba(255,255,255,0.4); 
+    margin: 4px 0 0; 
+  }
 
   .nm-btn-primary {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 20px; border-radius: 9px; background: #f5a623;
+    padding: 10px 22px; border-radius: 9px; background: #f5a623;
     color: #1a0e00; font-family: 'DM Sans', sans-serif;
-    font-size: 0.875rem; font-weight: 600; border: none;
+    font-size: 0.875rem; font-weight: 700; border: none;
     cursor: pointer; text-decoration: none; white-space: nowrap;
     transition: background 0.16s, box-shadow 0.16s, transform 0.1s;
   }
   .nm-btn-primary:hover {
-    background: #e8981e; color: #1a0e00;
-    box-shadow: 0 4px 16px rgba(245,166,35,0.25); transform: translateY(-1px);
+    background: #e8981e; 
+    box-shadow: 0 4px 18px rgba(245,166,35,0.25); 
+    transform: translateY(-1px);
   }
+
   .nm-btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 9px 18px; border-radius: 9px; background: transparent;
     border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.65);
     font-size: 0.875rem; font-weight: 500; text-decoration: none;
-    transition: background 0.16s, color 0.16s;
+    transition: all 0.16s;
   }
-  .nm-btn-ghost:hover { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.92); }
+  .nm-btn-ghost:hover { 
+    background: rgba(255,255,255,0.04); 
+    color: rgba(255,255,255,0.92); 
+    border-color: rgba(255,255,255,0.15);
+  }
 
   .nm-alert {
     display: flex; align-items: flex-start; gap: 10px;
@@ -44,60 +76,120 @@
     font-size: 0.875rem; font-weight: 500; margin-bottom: 24px;
   }
   .nm-alert i { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-  .nm-alert-success { background: rgba(46,204,138,0.1); border: 1px solid rgba(46,204,138,0.25); color: #2ecc8a; }
+  .nm-alert-success { background: rgba(46,204,138,0.08); border: 1px solid rgba(46,204,138,0.2); color: #2ecc8a; }
   .nm-alert-danger  { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22); color: #f87171; }
 
+  /* Search - Fixed text cutoff on mobile */
   .nm-search-form { margin-bottom: 24px; }
   .nm-search-wrap {
     display: flex; align-items: center; gap: 8px;
     background: #0d1b2a; border: 1px solid rgba(255,255,255,0.07);
     border-radius: 10px; padding: 6px 6px 6px 14px;
-    transition: border-color 0.16s, box-shadow 0.16s;
+    transition: border-color 0.16s;
+    min-width: 0;
+    flex-wrap: wrap;
   }
   .nm-search-wrap:focus-within {
-    border-color: rgba(245,166,35,0.4); box-shadow: 0 0 0 3px rgba(245,166,35,0.08);
+    border-color: rgba(245,166,35,0.4); 
+    box-shadow: 0 0 0 3px rgba(245,166,35,0.08);
   }
   .nm-search-icon { color: rgba(255,255,255,0.4); font-size: 0.9rem; flex-shrink: 0; }
   .nm-search-input {
-    flex: 1; background: transparent; border: none; outline: none;
-    color: rgba(255,255,255,0.92); font-family: 'DM Sans', sans-serif;
-    font-size: 0.875rem; padding: 4px 0; min-width: 0;
+    flex: 1; 
+    min-width: 0;
+    background: transparent; 
+    border: none; 
+    outline: none;
+    color: rgba(255,255,255,0.92); 
+    font-size: 0.875rem; 
+    padding: 4px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .nm-search-input::placeholder { color: rgba(255,255,255,0.35); }
+  .nm-search-input::placeholder { 
+    color: rgba(255,255,255,0.35); 
+  }
 
-  .nm-card { background: #0d1b2a; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; overflow: hidden; }
+  .nm-card { 
+    background: #0d1b2a; 
+    border: 1px solid rgba(255,255,255,0.07); 
+    border-radius: 14px; 
+    overflow: hidden; 
+  }
 
-  .nm-table { width: 100%; border-collapse: collapse; font-size: 0.865rem; margin: 0; }
+  .nm-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 0.865rem; 
+  }
   .nm-table thead tr { border-bottom: 1px solid rgba(255,255,255,0.07); }
   .nm-table thead th {
-    padding: 13px 16px; font-size: 0.72rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.4); white-space: nowrap; background: #112235;
+    padding: 13px 16px; 
+    font-size: 0.72rem; 
+    font-weight: 700;
+    text-transform: uppercase; 
+    letter-spacing: 0.06em;
+    color: rgba(255,255,255,0.35); 
+    background: #112235;
+    text-align: left;
   }
-  .nm-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.14s; }
+  .nm-table tbody tr { 
+    border-bottom: 1px solid rgba(255,255,255,0.04); 
+    transition: background 0.14s; 
+  }
   .nm-table tbody tr:last-child { border-bottom: none; }
   .nm-table tbody tr:hover { background: rgba(255,255,255,0.025); }
-  .nm-table td { padding: 14px 16px; vertical-align: middle; color: rgba(255,255,255,0.65); }
+  .nm-table td { padding: 14px 16px; vertical-align: middle; }
 
   .nm-emp-cell { display: flex; align-items: center; gap: 11px; }
   .nm-emp-avatar {
     width: 34px; height: 34px; border-radius: 9px;
     background: linear-gradient(135deg, #2563eb, #60a5fa);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Sora', sans-serif; font-size: 0.8rem; font-weight: 700;
+    font-family: 'Sora', sans-serif; font-size: 0.82rem; font-weight: 700;
     color: #fff; flex-shrink: 0;
   }
   .nm-emp-name  { font-weight: 600; color: rgba(255,255,255,0.92); font-size: 0.875rem; }
   .nm-emp-email { font-size: 0.775rem; color: rgba(255,255,255,0.4); margin-top: 1px; }
-  .nm-cell-main { color: rgba(255,255,255,0.65); font-weight: 500; }
-  .nm-cell-sub  { font-size: 0.775rem; color: rgba(255,255,255,0.4); margin-top: 1px; }
-  .nm-salary    { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.875rem; color: rgba(255,255,255,0.92); white-space: nowrap; }
 
-  .nm-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.73rem; font-weight: 600; border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
-  .nm-badge-annual { background: rgba(245,166,35,0.1);  border: 1px solid rgba(245,166,35,0.2);  color: #f5a623; }
-  .nm-badge-sick   { background: rgba(96,165,250,0.1);  border: 1px solid rgba(96,165,250,0.2);  color: #60a5fa; }
-  .nm-badge-on     { background: rgba(46,204,138,0.1);  border: 1px solid rgba(46,204,138,0.2);  color: #2ecc8a; }
-  .nm-badge-off    { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.4); }
+  .nm-cell-main { color: rgba(255,255,255,0.75); font-weight: 500; }
+  .nm-cell-sub  { font-size: 0.775rem; color: rgba(255,255,255,0.4); margin-top: 1px; }
+  .nm-salary { 
+    font-family: 'Sora', sans-serif; 
+    font-weight: 700; 
+    font-size: 0.875rem; 
+    color: rgba(255,255,255,0.92); 
+    white-space: nowrap; 
+  }
+
+  /* Leave Display - Updated for refined tracking */
+  .nm-leave-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.73rem;
+    line-height: 1.3;
+  }
+  .nm-leave-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nm-leave-label {
+    font-size: 0.68rem;
+    min-width: 42px;
+    opacity: 0.85;
+    flex-shrink: 0;
+  }
+  .nm-leave-value.paid   { color: #34d399; font-weight: 600; }
+  .nm-leave-value.unpaid { color: #f87171; font-weight: 600; }
+
+  .nm-balance {
+    font-size: 0.68rem;
+    color: rgba(255,255,255,0.45);
+    margin-top: 2px;
+  }
 
   .nm-actions { display: flex; align-items: center; gap: 6px; }
   .nm-action-btn {
@@ -105,164 +197,310 @@
     border: 1px solid rgba(255,255,255,0.07); background: transparent;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.82rem; cursor: pointer; text-decoration: none;
-    transition: background 0.14s, border-color 0.14s, color 0.14s;
+    transition: all 0.14s;
   }
   .nm-action-edit   { color: #60a5fa; }
-  .nm-action-edit:hover   { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.25); color: #60a5fa; }
+  .nm-action-edit:hover   { background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.3); }
   .nm-action-delete { color: #f87171; }
-  .nm-action-delete:hover { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.25); color: #f87171; }
+  .nm-action-delete:hover { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); }
 
-  .nm-empty-state { background: #0d1b2a; border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 64px 24px; text-align: center; }
-  .nm-empty-icon  { font-size: 2.5rem; color: rgba(255,255,255,0.4); margin-bottom: 16px; opacity: 0.4; }
-  .nm-empty-text  { font-size: 0.9rem; color: rgba(255,255,255,0.4); margin-bottom: 20px; }
+  .nm-empty-state { 
+    background: #0d1b2a; 
+    border: 1px solid rgba(255,255,255,0.07); 
+    border-radius: 14px; 
+    padding: 80px 24px; 
+    text-align: center; 
+  }
+  .nm-empty-icon  { font-size: 3rem; opacity: 0.35; margin-bottom: 16px; }
+  .nm-empty-text  { font-size: 0.9rem; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+
+  /* ── Responsive - Minimal hiding only when absolutely necessary ── */
+  @media (max-width: 991.98px) {
+    .nm-page-wrapper { padding: 24px 20px 80px; }
+  }
 
   @media (max-width: 767.98px) {
-    .nm-page-wrapper { padding: 20px 16px 40px; }
-    .nm-page-header  { flex-direction: column; align-items: flex-start; }
-    .nm-page-title   { font-size: 1.25rem; }
-    .nm-search-wrap  { flex-wrap: wrap; }
-    .nm-search-input { min-width: 100%; order: 2; }
-    .nm-search-icon  { display: none; }
-    .nm-btn-primary.nm-search-btn { order: 3; width: 100%; justify-content: center; }
-    .nm-table thead th:nth-child(4),
-    .nm-table thead th:nth-child(5),
-    .nm-table td:nth-child(4),
-    .nm-table td:nth-child(5) { display: none; }
+    .nm-page-wrapper { padding: 20px 16px 100px; }
+    .nm-page-header { 
+      flex-direction: column; 
+      align-items: stretch; 
+      gap: 16px; 
+    }
+    .nm-page-title { font-size: 1.35rem; }
+
+    /* Only hide Position/Department on small mobile to prevent horizontal overflow */
+    .nm-table thead th:nth-child(2),
+    .nm-table td:nth-child(2) { 
+      display: none; 
+    }
+
+    /* Keep Annual Leave, Sick Leave, and Portal Access visible */
+    .nm-leave-group {
+      font-size: 0.71rem;
+      gap: 3px;
+    }
+    .nm-leave-label { 
+      min-width: 40px; 
+      font-size: 0.66rem; 
+    }
+  }
+
+  @media (max-width: 480px) {
+    .nm-table td { padding: 12px 10px; }
+    .nm-emp-avatar { width: 30px; height: 30px; font-size: 0.78rem; }
+    
+    .nm-leave-group {
+      font-size: 0.69rem;
+    }
+  }
+
+  /* Footer styles */
+  .nm-footer {
+    background: #0a1725;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 32px 24px 28px;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.78rem;
+  }
+  .nm-footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: space-between;
   }
 </style>
 
-<div class="nm-page-wrapper">
-  <div class="nm-page-inner">
+<div class="nm-app-wrapper">
+  <div class="nm-main-content">
 
-    <!-- Flash messages -->
-    <% if (success && success.length > 0) { %>
-      <div class="nm-alert nm-alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill"></i>
-        <span><%= success[0] %></span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
-      </div>
-    <% } %>
-    <% if (error && error.length > 0) { %>
-      <div class="nm-alert nm-alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-circle-fill"></i>
-        <span><%= error[0] %></span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
-      </div>
-    <% } %>
+    <div class="nm-page-wrapper">
+      <div class="nm-page-inner">
 
-    <!-- Page header -->
-    <div class="nm-page-header">
-      <div>
-        <h1 class="nm-page-title">Employees</h1>
-        <p class="nm-page-subtitle"><%= employees.length %> active employee<%= employees.length !== 1 ? 's' : '' %></p>
+        <!-- Flash messages -->
+        <% if (success && success.length > 0) { %>
+          <div class="nm-alert nm-alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <span><%= success[0] %></span>
+            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+          </div>
+        <% } %>
+        <% if (error && error.length > 0) { %>
+          <div class="nm-alert nm-alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span><%= error[0] %></span>
+            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="alert"></button>
+          </div>
+        <% } %>
+
+        <!-- Page header -->
+        <div class="nm-page-header">
+          <div>
+            <h1 class="nm-page-title">Employees</h1>
+            <p class="nm-page-subtitle"><%= employees.length %> active employee<%= employees.length !== 1 ? 's' : '' %></p>
+          </div>
+
+          <% if (subscription && subscription.plan === 'trial' && employees.length >= 3) { %>
+            <a href="/subscribe" class="nm-btn-primary">
+              <i class="bi bi-lock-fill"></i> Upgrade to Add More
+            </a>
+          <% } else { %>
+            <a href="/employees/new" class="nm-btn-primary">
+              <i class="bi bi-person-plus"></i> Add Employee
+            </a>
+          <% } %>
+        </div>
+
+        <!-- Search -->
+        <form method="GET" action="/employees" class="nm-search-form">
+          <div class="nm-search-wrap">
+            <i class="bi bi-search nm-search-icon"></i>
+            <input type="text" name="search" class="nm-search-input"
+                   placeholder="Search by name, position, department or email…" 
+                   value="<%= search || '' %>" autocomplete="off" />
+            <button type="submit" class="nm-btn-primary">Search</button>
+            <% if (search) { %>
+              <a href="/employees" class="nm-btn-ghost">Clear</a>
+            <% } %>
+          </div>
+        </form>
+
+        <% if (employees.length === 0) { %>
+          <div class="nm-empty-state">
+            <div class="nm-empty-icon"><i class="bi bi-people"></i></div>
+            <% if (search) { %>
+              <p class="nm-empty-text">No employees found for <strong>"<%= search %>"</strong>.</p>
+              <a href="/employees" class="nm-btn-ghost">Clear search</a>
+            <% } else { %>
+              <p class="nm-empty-text">No employees added yet.</p>
+              <a href="/employees/new" class="nm-btn-primary">
+                <i class="bi bi-person-plus"></i> Add your first employee
+              </a>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="nm-card">
+            <div class="table-responsive">
+              <table class="nm-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Position / Department</th>
+                    <th>Basic Salary</th>
+                    <th>Annual Leave Taken</th>
+                    <th>Sick Leave Taken</th>
+                    <th>Portal Access</th>
+                    <th class="text-end" style="padding-right: 24px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% employees.forEach(emp => { %>
+                    <tr>
+                      <td>
+                        <div class="nm-emp-cell">
+                          <span class="nm-emp-avatar"><%= (emp.fullName || '??').charAt(0).toUpperCase() %></span>
+                          <div>
+                            <div class="nm-emp-name"><%= emp.fullName || 'Unknown' %></div>
+                            <div class="nm-emp-email"><%= emp.email || '—' %></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="nm-cell-main"><%= emp.position || '—' %></div>
+                        <div class="nm-cell-sub"><%= emp.department || '—' %></div>
+                      </td>
+                      <td>
+                        <span class="nm-salary">
+                          N$ <%= (emp.basicSalary || 0).toLocaleString('en-NA', {minimumFractionDigits: 2}) %>
+                        </span>
+                      </td>
+
+                      <!-- Annual Leave Taken -->
+                      <td>
+                        <div class="nm-leave-group">
+                          <div class="nm-leave-row">
+                            <span class="nm-leave-label" style="color:#34d399;">Paid</span>
+                            <span class="nm-leave-value paid"><%= emp.annualLeavePaidYTD || 0 %>d</span>
+                          </div>
+                          <div class="nm-leave-row">
+                            <span class="nm-leave-label" style="color:#f87171;">Unpaid</span>
+                            <span class="nm-leave-value unpaid"><%= emp.annualLeaveUnpaidYTD || 0 %>d</span>
+                          </div>
+                          <div class="nm-balance">
+                            Remaining: <strong><%= emp.annualLeaveBalance || 0 %></strong>d
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Sick Leave Taken -->
+                      <td>
+                        <div class="nm-leave-group">
+                          <div class="nm-leave-row">
+                            <span class="nm-leave-label" style="color:#34d399;">Paid</span>
+                            <span class="nm-leave-value paid"><%= emp.sickLeavePaidYTD || 0 %>d</span>
+                          </div>
+                          <div class="nm-leave-row">
+                            <span class="nm-leave-label" style="color:#f87171;">Unpaid</span>
+                            <span class="nm-leave-value unpaid"><%= emp.sickLeaveUnpaidYTD || 0 %>d</span>
+                          </div>
+                          <div class="nm-balance">
+                            Remaining: <strong><%= emp.sickLeaveBalance || 0 %></strong>d
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Portal Access -->
+                      <td>
+                        <% if (emp.portalEnabled) { %>
+                          <span class="nm-badge nm-badge-on"><i class="bi bi-check-circle-fill"></i> On</span>
+                        <% } else { %>
+                          <span class="nm-badge nm-badge-off">Off</span>
+                        <% } %>
+                      </td>
+
+                      <td class="text-end" style="padding-right: 20px;">
+                        <div class="nm-actions">
+                          <a href="/employees/<%= emp._id %>/edit" 
+                             class="nm-action-btn nm-action-edit" 
+                             title="Edit employee">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                          <form action="/employees/<%= emp._id %>?_method=DELETE" 
+                                method="POST" class="d-inline"
+                                onsubmit="return confirm('Delete <%= emp.fullName %>? This cannot be undone.')">
+                            <button type="submit" class="nm-action-btn nm-action-delete" title="Delete employee">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% } %>
+
       </div>
-      <% if (subscription && subscription.plan === 'trial' && employees.length >= 3) { %>
-        <a href="/subscribe" class="nm-btn-primary">
-          <i class="bi bi-lock-fill"></i>Upgrade to Add More
-        </a>
-      <% } else { %>
-        <a href="/employees/new" class="nm-btn-primary">
-          <i class="bi bi-person-plus"></i>Add Employee
-        </a>
-      <% } %>
     </div>
 
-    <!-- Search -->
-    <form method="GET" action="/employees" class="nm-search-form">
-      <div class="nm-search-wrap">
-        <i class="bi bi-search nm-search-icon"></i>
-        <input type="text" name="search" class="nm-search-input"
-               placeholder="Search by name, position, department or email…"
-               value="<%= search || '' %>" autocomplete="off" />
-        <button type="submit" class="nm-btn-primary nm-search-btn">Search</button>
-        <% if (search) { %>
-          <a href="/employees" class="nm-btn-ghost">Clear</a>
-        <% } %>
-      </div>
-    </form>
-
-    <!-- Empty state -->
-    <% if (employees.length === 0) { %>
-      <div class="nm-empty-state">
-        <div class="nm-empty-icon"><i class="bi bi-people"></i></div>
-        <% if (search) { %>
-          <p class="nm-empty-text">No employees found for <strong>"<%= search %>"</strong>.</p>
-          <a href="/employees" class="nm-btn-ghost">Clear search</a>
-        <% } else { %>
-          <p class="nm-empty-text">No employees yet.</p>
-          <a href="/employees/new" class="nm-btn-primary">Add your first employee</a>
-        <% } %>
-      </div>
-
-    <% } else { %>
-      <div class="nm-card">
-        <div class="table-responsive">
-          <table class="nm-table">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Position / Dept</th>
-                <th>Basic Salary</th>
-                <th>Annual Leave</th>
-                <th>Sick Leave</th>
-                <th>Portal</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% employees.forEach(emp => { %>
-                <tr>
-                  <td>
-                    <div class="nm-emp-cell">
-                      <span class="nm-emp-avatar"><%= emp.fullName.charAt(0).toUpperCase() %></span>
-                      <div>
-                        <div class="nm-emp-name"><%= emp.fullName %></div>
-                        <div class="nm-emp-email"><%= emp.email %></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="nm-cell-main"><%= emp.position || '—' %></div>
-                    <div class="nm-cell-sub"><%= emp.department || '' %></div>
-                  </td>
-                  <td>
-                    <span class="nm-salary">N$ <%= emp.basicSalary.toLocaleString('en-NA', {minimumFractionDigits:2}) %></span>
-                  </td>
-                  <td>
-                    <span class="nm-badge nm-badge-annual"><i class="bi bi-sun"></i><%= emp.annualLeaveBalance %> days</span>
-                  </td>
-                  <td>
-                    <span class="nm-badge nm-badge-sick"><i class="bi bi-heart-pulse"></i><%= emp.sickLeaveBalance %> days</span>
-                  </td>
-                  <td>
-                    <% if (emp.portalEnabled) { %>
-                      <span class="nm-badge nm-badge-on"><i class="bi bi-check-circle-fill"></i>On</span>
-                    <% } else { %>
-                      <span class="nm-badge nm-badge-off">Off</span>
-                    <% } %>
-                  </td>
-                  <td>
-                    <div class="nm-actions">
-                      <a href="/employees/<%= emp._id %>/edit" class="nm-action-btn nm-action-edit" title="Edit">
-                        <i class="bi bi-pencil"></i>
-                      </a>
-                      <form action="/employees/<%= emp._id %>?_method=DELETE" method="POST" class="d-inline"
-                            onsubmit="return confirm('Remove <%= emp.fullName %>? This cannot be undone.')">
-                        <button type="submit" class="nm-action-btn nm-action-delete" title="Delete">
-                          <i class="bi bi-trash"></i>
-                        </button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    <% } %>
-
   </div>
+
+  <!-- Footer - Fixed and pushed to bottom -->
+  <footer class="nm-footer">
+    <div class="nm-footer-inner">
+
+      <!-- Left: brand + copyright -->
+      <div class="nm-footer-left">
+        <a href="/dashboard" class="nm-footer-brand">
+          <span class="nm-footer-brand-icon"><i class="bi bi-coin"></i></span>
+          <span class="nm-footer-brand-text">Veldt Payroll</span>
+        </a>
+        <span class="nm-footer-copy">
+          &copy; <%= new Date().getFullYear() %> Veldt Payroll &mdash; Built for Namibian businesses
+        </span>
+      </div>
+
+      <!-- Center: utility links -->
+      <nav class="nm-footer-links" aria-label="Footer links">
+        <a href="/privacy" class="nm-footer-link">Privacy</a>
+        <a href="/terms" class="nm-footer-link">Terms</a>
+        <a href="/support" class="nm-footer-link">Support</a>
+        <a href="https://namra.org.na" target="_blank" rel="noopener" class="nm-footer-link">NamRA</a>
+      </nav>
+
+      <!-- Right: compliance notice -->
+      <div class="nm-footer-notice" role="note">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Payroll calculations are for guidance only. Always verify with NamRA and Social Security before final submission.</span>
+      </div>
+
+    </div>
+  </footer>
 </div>
 
-<%- include('../partials/footer') %>
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="/js/main.js"></script>
+<script>
+  (function () {
+    const maxAge = <%= typeof sessionMaxAge !== 'undefined' ? sessionMaxAge : 0 %>;
+    const isAdmin = <%= user ? 'true' : 'false' %>;
+
+    if (!maxAge || maxAge <= 0) return;
+
+    setTimeout(() => {
+      if (isAdmin) {
+        window.location.href = '/login?expired=1';
+      } else {
+        window.location.href = '/portal/login?expired=1';
+      }
+    }, maxAge);
+  })();
+</script>
+</body>
+</html>

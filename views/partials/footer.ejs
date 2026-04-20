@@ -5,10 +5,10 @@
     <div class="nm-footer-left">
       <a href="/dashboard" class="nm-footer-brand">
         <span class="nm-footer-brand-icon"><i class="bi bi-coin"></i></span>
-        <span class="nm-footer-brand-text">NamPayroll</span>
+        <span class="nm-footer-brand-text">Veldt Payroll</span>
       </a>
       <span class="nm-footer-copy">
-        &copy; <%= new Date().getFullYear() %> NamPayroll &mdash; Built for Namibian businesses
+        &copy; <%= new Date().getFullYear() %> Veldt Payroll &mdash; Built for Namibian businesses
       </span>
     </div>
 
@@ -33,5 +33,24 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
 <script src="/js/main.js"></script>
+<script>
+  (function () {
+    // Safe fallback for session timeout
+    const maxAge = <%= typeof sessionMaxAge !== 'undefined' ? sessionMaxAge : 0 %>;
+    
+    // Safe check for user (prevents "user is not defined")
+    const isAdmin = <%= typeof user !== 'undefined' && user ? 'true' : 'false' %>;
+
+    if (!maxAge || maxAge <= 0) return;
+
+    setTimeout(() => {
+      if (isAdmin) {
+        window.location.href = '/login?expired=1';
+      } else {
+        window.location.href = '/portal/login?expired=1';
+      }
+    }, maxAge);
+  })();
+</script>
 </body>
 </html>

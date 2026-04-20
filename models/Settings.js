@@ -24,26 +24,27 @@ const payslipThemeSchema = new mongoose.Schema({
 }, { _id: false });
 
 // ── Custom pay item sub-doc ───────────────────────────────────────────────────
-/**
- * A custom earning or deduction line that the company defines once
- * and which then appears as an extra column on every payroll run.
- *
- * type:
- *   'earning_taxable'    → adds to grossPay AND taxableGross (subject to PAYE)
- *   'earning_nontaxable' → adds to grossPay only (exempt from PAYE)
- *   'deduction'          → reduces netPay (not a statutory deduction)
- *
- * inputMode:
- *   'variable'  → admin enters an amount per employee each payroll run
- *   'fixed'     → same defaultAmount applied to every employee automatically
- *                 (admin can still override per employee if needed)
- */
 const customPayItemSchema = new mongoose.Schema({
   name:         { type: String, required: true, trim: true, maxlength: 60 },
   type: {
     type: String,
     required: true,
     enum: ['earning_taxable', 'earning_nontaxable', 'deduction']
+  },
+  // NEW: This tells us exactly where it goes in ETX and on payslip
+  category: {
+    type: String,
+    enum: [
+      'normal',                     // Regular salary / normal earning
+      'other_allowance',            // Other Allowance (Specify)
+      'other_income',               // Other Income (Specify)
+      'fringe_benefit',             // Other fringe benefits
+      'entertainment_allowance',    // Entertainment Allowance
+      'vehicle_running_allowance',  // Vehicle running expense allowance
+      'vehicle_purchase_allowance', // Vehicle purchase allowance
+      'subsistence_travel'          // Subsistence and Travel Expense Allowance
+    ],
+    default: 'normal'
   },
   inputMode:    { type: String, enum: ['variable', 'fixed'], default: 'variable' },
   defaultAmount:{ type: Number, default: 0, min: 0 },
@@ -78,13 +79,28 @@ const settingsSchema = new mongoose.Schema({
     ]
   },
 
-  overtimeMultiplier:  { type: Number, default: 1.5, min: 1 },
-  workingDaysPerMonth: { type: Number, default: 22,  min: 1 },
+  // ── UPDATED: Separated normal and public holiday overtime rates ──────────────
+  normalOvertimeMultiplier:     { type: Number, default: 1.5, min: 1 },
+  publicHolidayOvertimeMultiplier: { type: Number, default: 2.0, min: 1 },
+  
+  workingDaysInMonth: { type: Number, default: 22,  min: 1 },
+  hoursPerDay: { type: Number, default: 8, min: 1, max: 24 },
 
   payslipTheme: { type: payslipThemeSchema, default: () => ({}) },
 
   /** Company-defined custom earnings and deductions */
-  customPayItems: { type: [customPayItemSchema], default: [] }
+  customPayItems: { type: [customPayItemSchema], default: [] },
+
+  // ── Fringe Benefits Configuration (User can customize rates) ───────────────
+  fringeBenefits: {
+    housing: {
+      freeRate:       { type: Number, default: 0.10, min: 0 },     // 10% of basic salary for free housing
+      subsidisedRate: { type: Number, default: 0.05, min: 0 }      // 5% of basic salary for subsidised housing
+    },
+    vehicle: {
+      monthlyDeterminedValue: { type: Number, default: 1500, min: 0 }   // Default N$1,500 per month
+    }
+  }
 
 }, { timestamps: true });
 

@@ -33,7 +33,7 @@ exports.getDashboard = async (req, res) => {
       .lean();
 
     res.render('dashboard/index', {
-      title: 'Dashboard – NamPayroll',
+      title: 'Dashboard – VeldtPayroll',
       employeeCount, // This is now the live count
       currentMonth: now.format('MMMM YYYY'),
       currentPayroll,

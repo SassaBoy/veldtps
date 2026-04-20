@@ -1,20 +1,25 @@
 /**
- * utils/paye5Generator.js – NamPayroll
+ * utils/paye5Generator.js – Veldt Payroll
  * ─────────────────────────────────────────────────────────────────────────────
  * Generates the official Namibian P.A.Y.E.5 Employee's Tax Certificate.
  *
- * Layout matches the official Ministry of Finance / NamRA form:
- *   – Pure black & white, no colour fills
- *   – "P.A.Y.E.5" heading top-left with Republic of Namibia header centred
- *   – Bordered box sections: EMPLOYER DETAILS, EMPLOYEE DETAILS,
- *     REMUNERATION, DEDUCTIONS, TAX COMPUTATION, DECLARATION
- *   – Dotted value fields inside bordered sections
- *   – Code numbers in right margin (3601, 4001, etc.)
+ * WHAT IS THE PAYE5?
+ *   The PAYE5 (also called the "Employee's Tax Certificate") is issued by
+ *   every employer to every employee at the end of each tax year
+ *   (1 March – 28/29 February). The employee uses it to file their annual
+ *   income tax return (ITX300) with NamRA.
  *
- * Reference: Official PAYE5 / ITA5 form, Republic of Namibia Ministry of
- * Finance, Income Tax Act 1981, Section 83.
+ * NamRA REQUIREMENTS:
+ *   - Must show the employer's PAYE File Number and TIN.
+ *   - Must show the employee's TIN and ID number.
+ *   - Must show gross remuneration broken down by income code.
+ *   - Must show all tax-deductible contributions (pension, provident, retirement,
+ *     study policy, medical aid, SSC).
+ *   - Must show annual taxable income and annual PAYE deducted.
  * ─────────────────────────────────────────────────────────────────────────────
  */
+
+'use strict';
 
 const PDFDocument = require('pdfkit');
 const moment      = require('moment-timezone');
@@ -24,17 +29,17 @@ const PAGE_W = 595;
 const PAGE_H = 842;
 const ML     = 40;
 const MR     = 40;
-const INNER  = PAGE_W - ML - MR;   // 515
+const INNER  = PAGE_W - ML - MR;
 
-// ── Palette — pure black & white only ────────────────────────────────────────
+// ── Palette — pure black & white per NamRA official document standard ─────────
 const BLACK  = '#000000';
 const WHITE  = '#ffffff';
-const LGRAY  = '#999999';   // footnote only
+const LGRAY  = '#999999';   // footnotes and secondary labels only
 
-// ── Dot leader ────────────────────────────────────────────────────────────────
+// ── Dot leader for blank fields ───────────────────────────────────────────────
 const DOTS = '……………………………………………………………………………………………………………………………………………………';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Drawing helpers ──────────────────────────────────────────────────────────
 
 function hRule(doc, y, x1 = ML, x2 = ML + INNER, t = 0.5) {
   doc.save().moveTo(x1, y).lineTo(x2, y)
@@ -46,15 +51,10 @@ function vRule(doc, x, y1, y2, t = 0.5) {
      .strokeColor(BLACK).lineWidth(t).stroke().restore();
 }
 
-/** Outer border rectangle, no fill */
 function borderRect(doc, x, y, w, h, t = 0.6) {
   doc.save().rect(x, y, w, h).strokeColor(BLACK).lineWidth(t).stroke().restore();
 }
 
-/**
- * Section header — bold label on left, full-width underline beneath.
- * Matches the "EMPLOYER DETAILS" style of the official form.
- */
 function sectionHeader(doc, title, y, extraRight = '') {
   doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
      .text(title, ML + 3, y, { lineBreak: false });
@@ -67,54 +67,41 @@ function sectionHeader(doc, title, y, extraRight = '') {
   return lineY + 4;
 }
 
-/**
- * Two-column label/value row — label in left column, value in right.
- * Optional code number printed in far right margin (grey, smaller).
- */
 function labelRow(doc, label, value, y, rowH = 16, code = '', labelW = 200) {
-  // Label (left)
   doc.font('Helvetica').fontSize(8).fillColor(BLACK)
      .text(label, ML + 3, y + 3, { width: labelW - 6, lineBreak: false });
 
-  // Value (right of label) — printed over dot leaders
   const valX = ML + labelW;
-  const valW = INNER - labelW - (code ? 30 : 3);
+  const valW = INNER - labelW - (code ? 32 : 3);
 
-  // Dot leaders
   doc.font('Helvetica').fontSize(8).fillColor(BLACK)
      .text(DOTS, valX, y + 3, { width: valW, lineBreak: false });
 
-  // Actual value printed in bold over dots
-  if (value && String(value).trim()) {
+  if (value && String(value).trim() && String(value).trim() !== '—') {
     doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
        .text(String(value).trim(), valX + 2, y + 3,
          { width: valW - 4, lineBreak: false, ellipsis: true });
   }
 
-  // Code number in right margin
   if (code) {
     doc.font('Helvetica').fontSize(7).fillColor(LGRAY)
-       .text(code, ML + INNER - 27, y + 4, { width: 27, align: 'right', lineBreak: false });
+       .text(code, ML + INNER - 30, y + 4, { width: 30, align: 'right', lineBreak: false });
   }
 
   hRule(doc, y + rowH - 1, ML, ML + INNER, 0.3);
   return y + rowH;
 }
 
-/**
- * Amount row — description left, code centre, N$ value right-aligned.
- * Matches the tabular income/deduction rows of the official form.
- */
 function amountRow(doc, description, code, amount, y, rowH = 16) {
-  const amt = parseFloat(amount) || 0;
+  const amt    = parseFloat(amount) || 0;
   const fmtAmt = amt === 0 ? '' : fmtNAD(amt);
 
   doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text(description, ML + 3, y + 4, { width: INNER * 0.6, lineBreak: false });
+     .text(description, ML + 3, y + 4, { width: INNER * 0.58, lineBreak: false });
 
   if (code) {
-    doc.font('Helvetica').fontSize(7.5).fillColor(LGRAY)
-       .text(code, ML + INNER * 0.62, y + 4, { width: 40, lineBreak: false });
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(LGRAY)
+       .text(code, ML + INNER * 0.60, y + 4, { width: 45, lineBreak: false });
   }
 
   if (fmtAmt) {
@@ -126,9 +113,6 @@ function amountRow(doc, description, code, amount, y, rowH = 16) {
   return y + rowH;
 }
 
-/**
- * Total row — bold label, bold value, heavier border above and below.
- */
 function totalRow(doc, label, amount, y) {
   const H = 18;
   hRule(doc, y,     ML, ML + INNER, 0.8);
@@ -137,8 +121,10 @@ function totalRow(doc, label, amount, y) {
   doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
      .text(label, ML + 3, y + 5, { width: INNER * 0.6, lineBreak: false });
 
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
-     .text(fmtNAD(amount), ML, y + 5, { width: INNER - 3, align: 'right', lineBreak: false });
+  if (amount !== null && amount !== undefined) {
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
+       .text(fmtNAD(amount), ML, y + 5, { width: INNER - 3, align: 'right', lineBreak: false });
+  }
 
   return y + H + 2;
 }
@@ -148,44 +134,36 @@ function fmtNAD(n) {
   return 'N$ ' + v.toLocaleString('en-NA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// ── MAIN EXPORT ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN: Generate a single PAYE5 certificate
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * @param {Object} annualData   – Aggregated annual payroll totals
- * @param {Object} employee     – Employee doc (lean)
- * @param {Object} companyUser  – Company/User doc (lean)
- * @param {number} taxYear      – e.g. 2025 → covers Mar 2025 – Feb 2026
- * @param {Stream} stream
- */
 function generatePAYE5Certificate(annualData, employee, companyUser, taxYear, stream) {
 
-  const doc = new PDFDocument({ margin: 0, size: 'A4',
-    info: { Title: `PAYE5 Tax Certificate ${taxYear}` } });
+  const doc = new PDFDocument({
+    margin: 0,
+    size: 'A4',
+    info: { Title: `PAYE5 Tax Certificate ${taxYear}/${taxYear + 1}` }
+  });
   doc.pipe(stream);
 
-  // White background
   doc.rect(0, 0, PAGE_W, PAGE_H).fill(WHITE);
 
-  const certNo     = `PAYE5-${taxYear}-${String(employee.idNumber || '').slice(-6)}`;
+  const certNo     = `PAYE5-${taxYear}-${String(employee.idNumber || '').replace(/\D/g,'').slice(-6)}`;
   const taxYearStr = `${taxYear}/${taxYear + 1}`;
 
   let y = 28;
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // HEADER — matches official form exactly
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // "P.A.Y.E.5" — top left, large, bold (official form identifier)
+  // ── TOP IDENTIFIER ────────────────────────────────────────────────────────
   doc.font('Helvetica-Bold').fontSize(16).fillColor(BLACK)
      .text('P.A.Y.E.5', ML, y, { lineBreak: false });
 
-  // Certificate number — top right, small
   doc.font('Helvetica').fontSize(8).fillColor(LGRAY)
      .text(`Cert No: ${certNo}`, ML, y + 4, { width: INNER, align: 'right', lineBreak: false });
 
   y += 22;
 
-  // Centred government header block
+  // ── OFFICIAL HEADING ──────────────────────────────────────────────────────
   doc.font('Helvetica-Bold').fontSize(11).fillColor(BLACK)
      .text('REPUBLIC OF NAMIBIA', ML, y, { width: INNER, align: 'center' });
   y += 14;
@@ -206,288 +184,330 @@ function generatePAYE5Certificate(annualData, employee, companyUser, taxYear, st
      .text(`(1 March ${taxYear} to 28/29 February ${taxYear + 1})`, ML, y, { width: INNER, align: 'center' });
   y += 6;
 
-  // Heavy rule below header
   hRule(doc, y, ML, ML + INNER, 1.2);
-  y += 10;
+  y += 12;
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION 1 — EMPLOYER DETAILS
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── SECTION A: EMPLOYER DETAILS ───────────────────────────────────────────
+  y = sectionHeader(doc, 'A — EMPLOYER DETAILS', y);
 
-  y = sectionHeader(doc, 'EMPLOYER DETAILS', y);
-
-  // Two-column layout: left half employer fields, right half file numbers
-  const halfInner = (INNER - 10) / 2;
-
-  // Left column
-  labelRow(doc, 'PAYE File Number / Reg. No.',
-    companyUser.payeRegNo || '', y, 16, '', 175);
-  y += 16;
-  labelRow(doc, 'TIN (Employer)',
-    companyUser.tinNumber || '', y, 16, '', 175);
-  y += 16;
-  labelRow(doc, 'Registered Name of Employer',
-    companyUser.companyName || '', y, 16, '', 175);
-  y += 16;
-  labelRow(doc, 'Postal Address',
-    companyUser.postalAddress || companyUser.address || '', y, 16, '', 175);
-  y += 16;
-  labelRow(doc, 'Email Address',
-    companyUser.email || '', y, 16, '', 175);
-  y += 20;
+  y = labelRow(doc, 'PAYE File Number / Employer Registration No.',
+    companyUser.payeRegNo || companyUser.companyRegistrationNumber || '', y, 16, '', 215);
+  y = labelRow(doc, 'Employer TIN (Tax Identification Number)',
+    companyUser.tinNumber || '', y, 16, '', 215);
+  y = labelRow(doc, 'Registered Name of Employer',
+    companyUser.companyName || '', y, 16, '', 215);
+  y = labelRow(doc, 'Postal Address',
+    companyUser.postalAddress || companyUser.address || '', y, 16, '', 215);
+  y = labelRow(doc, 'Email Address',
+    companyUser.email || '', y, 16, '', 215);
+  y = labelRow(doc, 'Telephone Number',
+    companyUser.companyPhone || companyUser.phone || '', y, 16, '', 215);
+  y += 8;
 
   hRule(doc, y, ML, ML + INNER, 0.6);
-  y += 10;
+  y += 12;
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION 2 — EMPLOYEE DETAILS
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── SECTION B: EMPLOYEE DETAILS ───────────────────────────────────────────
+  y = sectionHeader(doc, 'B — EMPLOYEE DETAILS', y);
 
-  y = sectionHeader(doc, 'EMPLOYEE DETAILS', y);
-
-  // Row 1: Income Tax File No + Employee Number (two cols, matches official form)
-  const col1X = ML;
   const col2X = ML + INNER / 2 + 5;
   const colW  = INNER / 2 - 5;
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('INCOME TAX FILE IDENTIFICATION NO.', col1X + 3, y + 3, { lineBreak: false });
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(employee.tinNumber || '—', col1X + 3, y + 13, { width: colW - 6, lineBreak: false });
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('INCOME TAX FILE / TIN NUMBER', ML + 3, y + 3);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
+     .text(employee.tinNumber || '—', ML + 3, y + 13);
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('EMPLOYEE NUMBER / ID', col2X + 3, y + 3, { lineBreak: false });
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(employee.idNumber || '—', col2X + 3, y + 13, { width: colW - 6, lineBreak: false });
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('NAMIBIAN ID NUMBER', col2X + 3, y + 3);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
+     .text(employee.idNumber || '—', col2X + 3, y + 13);
 
-  vRule(doc, col2X - 3, y, y + 28, 0.4);
-  hRule(doc, y + 28, ML, ML + INNER, 0.4);
-  y += 32;
+  vRule(doc, col2X - 3, y, y + 30, 0.4);
+  hRule(doc, y + 30, ML, ML + INNER, 0.4);
+  y += 34;
 
-  // Row 2: Initials & Surname + First Names (two cols)
   const nameParts = (employee.fullName || '').trim().split(/\s+/);
   const firstName = nameParts[0] || '';
   const surname   = nameParts.slice(1).join(' ') || '';
   const initials  = firstName ? firstName[0].toUpperCase() + '.' : '';
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('INITIALS AND SURNAME', col1X + 3, y + 3, { lineBreak: false });
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('INITIALS AND SURNAME', ML + 3, y + 3);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
+     .text(`${initials} ${surname}`.trim() || '—', ML + 3, y + 13);
+
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('FIRST NAMES IN FULL', col2X + 3, y + 3);
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(BLACK)
+     .text(employee.fullName || '—', col2X + 3, y + 13);
+
+  vRule(doc, col2X - 3, y, y + 30, 0.4);
+  hRule(doc, y + 30, ML, ML + INNER, 0.4);
+  y += 34;
+
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('POSITION / DESIGNATION', ML + 3, y + 3);
   doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(`${initials} ${surname}`.trim(), col1X + 3, y + 13, { width: colW - 6, lineBreak: false });
+     .text(employee.position || '—', ML + 3, y + 13);
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('FIRST NAMES', col2X + 3, y + 3, { lineBreak: false });
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('DEPARTMENT', col2X + 3, y + 3);
   doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(employee.fullName || '—', col2X + 3, y + 13, { width: colW - 6, lineBreak: false });
+     .text(employee.department || '—', col2X + 3, y + 13);
 
-  vRule(doc, col2X - 3, y, y + 28, 0.4);
-  hRule(doc, y + 28, ML, ML + INNER, 0.4);
-  y += 32;
+  vRule(doc, col2X - 3, y, y + 30, 0.4);
+  hRule(doc, y + 30, ML, ML + INNER, 0.4);
+  y += 34;
 
-  // Row 3: Position + Department
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('POSITION / DESIGNATION', col1X + 3, y + 3, { lineBreak: false });
+  const dateJoined = employee.dateJoined
+    ? moment(employee.dateJoined).format('DD/MM/YYYY')
+    : '—';
+  const periodFrom = `01/03/${taxYear}`;
+  const periodTo   = `28/02/${taxYear + 1}`;
+
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('DATE EMPLOYED (Date Joined)', ML + 3, y + 3);
   doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(employee.position || '—', col1X + 3, y + 13, { width: colW - 6, lineBreak: false });
+     .text(dateJoined, ML + 3, y + 13);
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('DEPARTMENT', col2X + 3, y + 3, { lineBreak: false });
+  doc.font('Helvetica').fontSize(7.5).fillColor(BLACK)
+     .text('PERIOD OF THIS ASSESSMENT', col2X + 3, y + 3);
   doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(employee.department || '—', col2X + 3, y + 13, { width: colW - 6, lineBreak: false });
+     .text(`${periodFrom}  TO  ${periodTo}`, col2X + 3, y + 13);
 
-  vRule(doc, col2X - 3, y, y + 28, 0.4);
-  hRule(doc, y + 28, ML, ML + INNER, 0.4);
-  y += 32;
+  vRule(doc, col2X - 3, y, y + 30, 0.4);
+  hRule(doc, y + 30, ML, ML + INNER, 0.6);
+  y += 38;
 
-  // Row 4: Date Joined + Period of Employment
-  const dateJoined  = employee.dateJoined ? moment(employee.dateJoined).format('DD/MM/YYYY') : '—';
-  const periodFrom  = `01/03/${taxYear}`;
-  const periodTo    = `28/02/${taxYear + 1}`;
+  // ── SECTION C: REMUNERATION (INCOME) ──────────────────────────────────────
+  y = sectionHeader(doc, 'C — REMUNERATION RECEIVED', y, 'NamRA Code');
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('DATE OF EMPLOYMENT', col1X + 3, y + 3, { lineBreak: false });
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(dateJoined, col1X + 3, y + 13, { lineBreak: false });
+  y = amountRow(doc, 'Salaries, Wages & Pension (basic salary + adjusted for unpaid leave)',
+    '3601', annualData.annualSalary || 0, y);
 
-  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
-     .text('PERIOD OF ASSESSMENT', col2X + 3, y + 3, { lineBreak: false });
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
-     .text(`${periodFrom}  TO  ${periodTo}`, col2X + 3, y + 13, { width: colW - 6, lineBreak: false });
+  y = amountRow(doc, 'Overtime Income (overtime hours × overtime rate)',
+    '3602', annualData.annualOTPay || 0, y);
 
-  vRule(doc, col2X - 3, y, y + 28, 0.4);
-  hRule(doc, y + 28, ML, ML + INNER, 0.6);
-  y += 36;
+  y = amountRow(doc, 'Taxable Allowances (custom taxable pay items)',
+    '3605', annualData.annualTaxAllow || 0, y);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION 3 — REMUNERATION (Income)
-  // ══════════════════════════════════════════════════════════════════════════
+  y = amountRow(doc, 'Non-Taxable / Exempt Allowances (e.g. travel reimbursements)',
+    '3713', annualData.annualNonTaxAllow || 0, y);
 
-  // Section header with code guide top-right (matches official form)
-  y = sectionHeader(doc, 'REMUNERATION', y, 'CODE');
+  y = amountRow(doc,
+    `Housing Fringe Benefit (${employee.housingType === 'free' ? 'Free Housing' : employee.housingType === 'subsidised' ? 'Subsidised Housing' : 'None'})`,
+    '3701', annualData.annualHousingFringe || 0, y);
 
-  y = amountRow(doc, 'Salaries, Wages & Allowances',        '3601', annualData.annualSalary,      y);
-  y = amountRow(doc, 'Overtime Income',                     '3602', annualData.annualOTPay || 0,  y);
-  y = amountRow(doc, 'Commission',                          '3606', 0,                             y);
-  y = amountRow(doc, 'Taxable Allowances',                  '3605', annualData.annualTaxAllow || 0,y);
-  y = amountRow(doc, 'Non-Taxable Allowances',              '3713', annualData.annualNonTaxAllow||0,y);
-  y = amountRow(doc, 'Housing (Company-provided)',          '3701', 0,                             y);
-  y = amountRow(doc, 'Use of Motor Vehicle (Fringe Benefit)','3802', 0,                            y);
-  y = amountRow(doc, 'Subsistence & Travel Allowance',      '3714', 0,                             y);
-  y = amountRow(doc, 'Other Income',                        '3699', 0,                             y);
-  y += 2;
-  y = totalRow(doc, 'GROSS REMUNERATION', annualData.annualGross, y);
-  y += 6;
+  y = amountRow(doc,
+    `Company Vehicle Fringe Benefit (${employee.hasCompanyVehicle ? 'Company Vehicle Provided' : 'None'})`,
+    '3802', annualData.annualVehicleFringe || 0, y);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION 4 — DEDUCTIONS
-  // ══════════════════════════════════════════════════════════════════════════
+  y = amountRow(doc, 'Other Income (commission, bonuses, etc.)', '3699', 0, y);
 
-  y = sectionHeader(doc, 'DEDUCTIONS / CONTRIBUTIONS', y, 'CODE');
+  y += 4;
+  y = totalRow(doc, 'GROSS REMUNERATION (total before any deductions)', annualData.annualGross || 0, y);
+  y += 10;
 
-  const pensionAnn = (employee.pensionContribution    || 0) * 12;
-  const medicalAnn = (employee.medicalAidContribution || 0) * 12;
+  // ── SECTION D: DEDUCTIONS ─────────────────────────────────────────────────
+  y = sectionHeader(doc, 'D — DEDUCTIONS / CONTRIBUTIONS', y, 'NamRA Code');
 
-  y = amountRow(doc, 'Pension Fund Contributions',          '4001', pensionAnn,                         y);
-  y = amountRow(doc, 'Provident Fund Contributions',        '4003', 0,                                  y);
-  y = amountRow(doc, 'Retirement Annuity Fund',             '4006', 0,                                  y);
-  y = amountRow(doc, 'Medical Aid Contributions',           '4025', medicalAnn,                         y);
-  y = amountRow(doc, 'Social Security (SSC) – Employee',   '4115', annualData.annualSSCEmployee || 0,  y);
-  y = amountRow(doc, 'Other Deductions',                    '4999', 0,                                  y);
-  y += 2;
-  y = totalRow(doc, 'TOTAL DEDUCTIONS', annualData.annualDeductions || 0, y);
-  y += 6;
+  const annualPension = annualData.annualPension || ((employee.pensionContribution || 0) * 12);
+  y = amountRow(doc,
+    `Pension Fund — ${employee.pensionFundName || 'N/A'} (Reg: ${employee.pensionFundRegNo || '—'})`,
+    '4001', annualPension, y);
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION 5 — TAX COMPUTATION
-  // ══════════════════════════════════════════════════════════════════════════
+  // UPDATED: New fund deductions with correct NamRA codes
+  if (annualData.annualProvident > 0) {
+    y = amountRow(doc,
+      `Provident Fund — ${employee.providentFundName || 'N/A'} (Reg: ${employee.providentFundRegNo || '—'})`,
+      '4002', annualData.annualProvident, y);
+  }
 
-  y = sectionHeader(doc, 'TAX COMPUTATION', y, 'CODE');
+  if (annualData.annualRetirement > 0) {
+    y = amountRow(doc,
+      `Retirement Fund — ${employee.retirementFundName || 'N/A'} (Reg: ${employee.retirementFundRegNo || '—'})`,
+      '4003', annualData.annualRetirement, y);
+  }
 
-  y = amountRow(doc, 'Taxable Income (Gross Remuneration less Deductions)',
+  if (annualData.annualStudy > 0) {
+    y = amountRow(doc,
+      `Study Policy — ${employee.studyPolicyName || 'N/A'} (Reg: ${employee.studyPolicyRegNo || '—'})`,
+      '4004', annualData.annualStudy, y);
+  }
+
+  const annualMedical = annualData.annualMedical || ((employee.medicalAidContribution || 0) * 12);
+  y = amountRow(doc,
+    `Medical Aid — ${employee.medicalAidFundName || 'N/A'} (Member No: ${employee.medicalAidMemberNo || '—'})`,
+    '4025', annualMedical, y);
+
+  y = amountRow(doc,
+    'Social Security Contribution (SSC) — Employee Share (0.9% of taxable gross, max N$99/month)',
+    '4115', annualData.annualSSCEmployee || 0, y);
+
+  y += 4;
+  y = totalRow(doc, 'TOTAL DEDUCTIONS (pension + provident + retirement + study + medical + SSC)', 
+               annualData.annualDeductions || 0, y);
+  y += 10;
+
+  // ── SECTION E: TAX COMPUTATION ────────────────────────────────────────────
+  y = sectionHeader(doc, 'E — TAX COMPUTATION', y, 'NamRA Code');
+
+  y = amountRow(doc,
+    'Taxable Income (Gross Remuneration − Deductions)',
     '3697', annualData.taxableIncome || 0, y);
-  y = amountRow(doc, 'Annual Tax Liability (per NamRA tax tables)',
-    '3698', annualData.annualPAYE || 0,    y);
-  y = amountRow(doc, 'Tax Rebate / Directive',
-    '3699', 0, y);
-  y += 2;
 
-  // Bold highlighted PAYE deducted box — black background, white text
-  const pAYEH = 22;
+  y = amountRow(doc,
+    'Tax Payable (per NamRA progressive tax table)',
+    '3698', annualData.annualPAYE || 0, y);
+
+  y += 6;
+
+  const pAYEH = 26;
   doc.rect(ML, y, INNER, pAYEH).fill(BLACK);
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(WHITE)
-     .text('TOTAL EMPLOYEES\' TAX (PAYE) DEDUCTED FOR THE YEAR', ML + 6, y + 7, { lineBreak: false });
-  doc.font('Helvetica-Bold').fontSize(11).fillColor(WHITE)
-     .text(fmtNAD(annualData.annualPAYE || 0), ML, y + 6, { width: INNER - 6, align: 'right', lineBreak: false });
-  y += pAYEH + 10;
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(WHITE)
+     .text("TOTAL EMPLOYEES' TAX (P.A.Y.E) DEDUCTED FOR THE YEAR", ML + 8, y + 8);
+  doc.font('Helvetica-Bold').fontSize(13).fillColor(WHITE)
+     .text(fmtNAD(annualData.annualPAYE || 0), ML, y + 7, { width: INNER - 8, align: 'right' });
+  y += pAYEH + 14;
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SECTION 6 — DECLARATION
-  // ══════════════════════════════════════════════════════════════════════════
-
+  // ── SECTION F: DECLARATION ────────────────────────────────────────────────
   hRule(doc, y, ML, ML + INNER, 0.6);
-  y += 8;
+  y += 10;
 
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(BLACK)
-     .text('DECLARATION BY EMPLOYER', ML + 3, y);
-  y += 14;
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor(BLACK)
+     .text('F — DECLARATION BY EMPLOYER', ML + 3, y);
+  y += 16;
 
-  doc.font('Helvetica').fontSize(8.5).fillColor(BLACK)
+  doc.font('Helvetica').fontSize(8).fillColor(BLACK)
      .text(
-       'I hereby certify that the particulars given in this certificate are correct and complete in every respect.',
-       ML + 3, y, { width: INNER - 6 }
+       'I hereby certify that the particulars given in this certificate are correct and complete ' +
+       'in every respect, and that the amounts shown represent the remuneration paid and the ' +
+       'employees\' tax deducted during the above-mentioned year of assessment.',
+       ML + 3, y, { width: INNER - 6, lineBreak: true }
      );
-  y += 20;
+  y += 30;
 
-  // Signature row: Authorised Signatory | Employer Stamp | Date
-  const sigW   = (INNER - 20) / 3;
-  const sigLabels = [
-    'AUTHORISED SIGNATORY',
-    'EMPLOYER\'S STAMP',
-    `DATE:  ${moment().format('DD / MM / YYYY')}`
-  ];
+  const sigW = (INNER - 30) / 3;
+  const sigY = y;
 
-  sigLabels.forEach((lbl, i) => {
-    const sx = ML + i * (sigW + 10);
-    // Signature line
-    hRule(doc, y + 20, sx, sx + sigW, 0.5);
-    // Label below line
+  ['AUTHORISED SIGNATORY', "EMPLOYER'S STAMP", `DATE: ${moment().format('DD / MM / YYYY')}`].forEach((lbl, i) => {
+    const sx = ML + i * (sigW + 15);
+    hRule(doc, sigY + 22, sx, sx + sigW, 0.6);
     doc.font(i === 2 ? 'Helvetica-Bold' : 'Helvetica').fontSize(7.5).fillColor(BLACK)
-       .text(lbl, sx, y + 23, { width: sigW, align: 'center', lineBreak: false });
+       .text(lbl, sx, sigY + 26, { width: sigW, align: 'center' });
   });
 
-  y += 36;
+  y += 54;
 
-  // ── Retention notice ──────────────────────────────────────────────────────
   hRule(doc, y, ML, ML + INNER, 0.4);
-  y += 6;
-  doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(BLACK)
+  y += 8;
+  doc.font('Helvetica-Bold').fontSize(7).fillColor(BLACK)
+     .text('IMPORTANT NOTICE TO EMPLOYEE:', ML + 3, y);
+  y += 10;
+  doc.font('Helvetica').fontSize(7.2).fillColor(BLACK)
      .text(
        'This certificate is issued in terms of Section 83 of the Income Tax Act, 1981. ' +
-       'The employee must attach this certificate to their individual tax return (ITX300) submitted to NamRA. ' +
-       'Keep this certificate for your records.',
-       ML + 3, y, { width: INNER - 6 }
+       'You MUST attach this original certificate to your annual individual income tax return (ITX300) ' +
+       'when submitting to NamRA. Failure to do so may result in your return being rejected. ' +
+       'Please retain a photocopy for your own records. If you believe any amount on this ' +
+       'certificate is incorrect, contact your employer immediately.',
+       ML + 3, y, { width: INNER - 6, lineBreak: true }
      );
 
-  // ── Footer ────────────────────────────────────────────────────────────────
-  const footY = PAGE_H - 16;
-  hRule(doc, footY - 4, ML, ML + INNER, 0.3);
-  doc.font('Helvetica').fontSize(6).fillColor(LGRAY)
-     .text('Generated by NamPayroll · Namibia Revenue Agency (NamRA) · Income Tax Act, 1981',
-       ML, footY, { lineBreak: false });
-  doc.font('Helvetica').fontSize(6).fillColor(LGRAY)
-     .text(moment().format('DD MMMM YYYY, HH:mm'), ML, footY, { width: INNER, align: 'right', lineBreak: false });
+  const footY = PAGE_H - 20;
+  hRule(doc, footY - 8, ML, ML + INNER, 0.3);
+  doc.font('Helvetica').fontSize(6.5).fillColor(LGRAY)
+     .text('Generated by Veldt Payroll  ·  Income Tax Act, 1981 (as amended)  ·  Social Security Act 34 of 1994',
+       ML, footY);
+  doc.font('Helvetica').fontSize(6.5).fillColor(LGRAY)
+     .text(moment().format('DD MMMM YYYY, HH:mm'), ML, footY, { width: INNER, align: 'right' });
 
   doc.end();
 }
 
-// ── BULK ZIP helper ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// BULK: Generate PAYE5 certificates for all employees in a zip archive
+// ─────────────────────────────────────────────────────────────────────────────
 
 function appendAllPAYE5ToZip(payrollRuns, employees, companyUser, taxYear, archive) {
   const { PassThrough } = require('stream');
 
   const empMap = {};
-  for (const emp of employees) empMap[emp._id.toString()] = emp;
+  employees.forEach(emp => { empMap[emp._id.toString()] = emp; });
 
-  // Aggregate annual totals per employee across all payroll runs
   const annualMap = {};
+
   for (const run of payrollRuns) {
-    for (const ps of run.payslips) {
+    for (const ps of run.payslips || []) {
       const empId = ps.employee?.toString();
       if (!empId) continue;
+
       if (!annualMap[empId]) {
         annualMap[empId] = {
-          annualSalary: 0, annualOTPay: 0, annualTaxAllow: 0,
-          annualNonTaxAllow: 0, annualGross: 0, annualTaxGross: 0,
-          annualPAYE: 0, annualSSCEmployee: 0
+          annualSalary:        0,
+          annualOTPay:         0,
+          annualTaxAllow:      0,
+          annualNonTaxAllow:   0,
+          annualHousingFringe: 0,
+          annualVehicleFringe: 0,
+          annualGross:         0,
+          annualTaxGross:      0,
+          annualPAYE:          0,
+          annualSSCEmployee:   0,
+          annualPension:       0,
+          annualProvident:     0,      // NEW
+          annualRetirement:    0,      // NEW
+          annualStudy:         0,      // NEW
+          annualMedical:       0,
         };
       }
+
       const a = annualMap[empId];
-      a.annualSalary       += ps.basicSalary         || 0;
-      a.annualOTPay        += ps.overtimePay          || 0;
-      a.annualTaxAllow     += ps.taxableAllowances    || 0;
-      a.annualNonTaxAllow  += ps.nonTaxableAllowances || 0;
-      a.annualGross        += ps.grossPay             || 0;
-      a.annualTaxGross     += ps.taxableGross          || 0;
-      a.annualPAYE         += ps.paye                 || 0;
-      a.annualSSCEmployee  += ps.sscEmployee          || 0;
+      a.annualSalary        += ps.basicSalary              || 0;
+      a.annualOTPay         += ps.overtimePay               || 0;
+      a.annualTaxAllow      += ps.taxableAllowances         || 0;
+      a.annualNonTaxAllow   += ps.nonTaxableAllowances      || 0;
+      a.annualHousingFringe += ps.housingFringeBenefit      || 0;
+      a.annualVehicleFringe += ps.vehicleFringeBenefit      || 0;
+      a.annualGross         += ps.grossPay                  || 0;
+      a.annualTaxGross      += ps.taxableGross              || 0;
+      a.annualPAYE          += ps.paye                      || 0;
+      a.annualSSCEmployee   += ps.sscEmployee               || 0;
+      a.annualPension       += ps.pensionMonthly            || 0;
+      a.annualProvident     += ps.providentMonthly          || 0;   // NEW
+      a.annualRetirement    += ps.retirementMonthly         || 0;   // NEW
+      a.annualStudy         += ps.studyMonthly              || 0;   // NEW
+      a.annualMedical       += ps.medicalMonthly            || 0;
     }
   }
 
-  // Compute derived totals
   for (const [empId, a] of Object.entries(annualMap)) {
-    const emp        = empMap[empId] || {};
-    const pensionAnn = (emp.pensionContribution    || 0) * 12;
-    const medicalAnn = (emp.medicalAidContribution || 0) * 12;
-    a.annualDeductions = pensionAnn + medicalAnn + a.annualSSCEmployee;
-    a.taxableIncome    = Math.max(0, a.annualTaxGross - pensionAnn - medicalAnn);
+    const emp = empMap[empId] || {};
+
+    a.annualDeductions = Math.round(
+      (a.annualPension + a.annualProvident + a.annualRetirement + a.annualStudy + 
+       a.annualMedical + a.annualSSCEmployee) * 100
+    ) / 100;
+
+    a.taxableIncome = Math.max(
+      0,
+      Math.round((a.annualTaxGross - a.annualPension - a.annualProvident - 
+                  a.annualRetirement - a.annualStudy - a.annualMedical) * 100) / 100
+    );
+
+    for (const key of Object.keys(a)) {
+      if (typeof a[key] === 'number') a[key] = Math.round(a[key] * 100) / 100;
+    }
   }
 
-  // Append each certificate to the ZIP
   for (const [empId, annualData] of Object.entries(annualMap)) {
     const emp = empMap[empId];
     if (!emp) continue;
-    const safeName  = (emp.fullName || 'employee').replace(/[^a-z0-9]/gi, '_');
+
+    const safeName = (emp.fullName || 'employee').replace(/[^a-z0-9]/gi, '_');
     const pdfStream = new PassThrough();
+
     generatePAYE5Certificate(annualData, emp, companyUser, taxYear, pdfStream);
     archive.append(pdfStream, { name: `PAYE5_${safeName}_${taxYear}.pdf` });
   }

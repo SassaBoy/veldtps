@@ -20,10 +20,34 @@
   .nm-back-btn { width:38px; height:38px; border-radius:9px; border:1px solid rgba(255,255,255,0.07); background:#1a2f45; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.65); text-decoration:none; transition:0.16s; flex-shrink:0; }
   .nm-back-btn:hover { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.92); }
 
-  .nm-btn-primary { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:9px; background:#f5a623; color:#1a0e00; font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:700; border:none; cursor:pointer; transition:0.2s; }
-  .nm-btn-primary:hover { background:#e8981e; transform:translateY(-1px); box-shadow:0 4px 15px rgba(245,166,35,0.2); }
-  .nm-btn-ghost   { padding:9px 18px; border-radius:9px; border:1px solid rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); text-decoration:none; font-size:0.875rem; transition:0.16s; display:inline-flex; align-items:center; gap:7px; }
-  .nm-btn-ghost:hover { background:rgba(255,255,255,0.04); color:#fff; }
+  .nm-btn-primary { 
+    display:inline-flex; align-items:center; gap:8px; 
+    padding:10px 24px; border-radius:9px; 
+    background:#f5a623; color:#1a0e00; 
+    font-family:'DM Sans',sans-serif; font-size:0.9rem; font-weight:700; 
+    border:none; cursor:pointer; transition:0.2s; 
+  }
+  .nm-btn-primary:hover { 
+    background:#e8981e; 
+    transform:translateY(-1px); 
+    box-shadow:0 4px 15px rgba(245,166,35,0.2); 
+  }
+
+  .nm-btn-ghost { 
+    padding:9px 18px; border-radius:9px; 
+    border:1px solid rgba(255,255,255,0.07); 
+    color:rgba(255,255,255,0.65); 
+    text-decoration:none; 
+    font-size:0.875rem; 
+    transition:0.16s; 
+    display:inline-flex; 
+    align-items:center; 
+    gap:7px; 
+  }
+  .nm-btn-ghost:hover { 
+    background:rgba(255,255,255,0.04); 
+    color:#fff; 
+  }
 
   /* ── Form cards ─────────────────────────────────────────────────────────── */
   .nm-form-card { background:#0d1b2a; border:1px solid rgba(255,255,255,0.07); border-radius:14px; margin-bottom:20px; overflow:hidden; }
@@ -285,6 +309,90 @@
                 placeholder="0.00" />
             </div>
 
+            <!-- PROVIDENT FUND -->
+            <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Provident Fund</div></div>
+
+            <div class="col-md-5">
+              <label class="nm-label">Provident Fund Name</label>
+              <input type="text" name="providentFundName" class="nm-input"
+                value="<%= formData.providentFundName || '' %>"
+                placeholder="e.g., Standard Provident Fund" />
+              <p class="nm-hint">Name of the approved provident fund (if applicable).</p>
+            </div>
+            <div class="col-md-4">
+              <label class="nm-label">Registration Number</label>
+              <input type="text" name="providentFundRegNo" class="nm-input"
+                value="<%= formData.providentFundRegNo || '' %>"
+                placeholder="e.g., P-12345" />
+              <p class="nm-hint">Fund registration number from NamRA.</p>
+            </div>
+            <div class="col-md-3">
+              <label class="nm-label">Monthly Contribution (N$)</label>
+              <div class="nm-input-group">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="providentFundContribution" class="nm-input"
+                  placeholder="0.00" step="0.01" min="0"
+                  value="<%= formData.providentFundContribution || 0 %>">
+              </div>
+              <p class="nm-hint">Monthly amount — reduces taxable income before PAYE (s17, Income Tax Act).</p>
+            </div>
+
+            <!-- RETIREMENT FUND -->
+            <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Retirement Fund</div></div>
+
+            <div class="col-md-5">
+              <label class="nm-label">Retirement Fund Name</label>
+              <input type="text" name="retirementFundName" class="nm-input"
+                value="<%= formData.retirementFundName || '' %>"
+                placeholder="e.g., Sanlam Retirement Annuity" />
+              <p class="nm-hint">Name of the approved retirement/RA fund.</p>
+            </div>
+            <div class="col-md-4">
+              <label class="nm-label">Registration Number</label>
+              <input type="text" name="retirementFundRegNo" class="nm-input"
+                value="<%= formData.retirementFundRegNo || '' %>"
+                placeholder="e.g., R-67890" />
+              <p class="nm-hint">Fund registration number from NamRA.</p>
+            </div>
+            <div class="col-md-3">
+              <label class="nm-label">Monthly Contribution (N$)</label>
+              <div class="nm-input-group">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="retirementFundContribution" class="nm-input"
+                  placeholder="0.00" step="0.01" min="0"
+                  value="<%= formData.retirementFundContribution || 0 %>">
+              </div>
+              <p class="nm-hint">Monthly amount — reduces taxable income before PAYE (s17, Income Tax Act).</p>
+            </div>
+
+            <!-- STUDY POLICY -->
+            <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Study Policy</div></div>
+
+            <div class="col-md-5">
+              <label class="nm-label">Study Policy Name</label>
+              <input type="text" name="studyPolicyName" class="nm-input"
+                value="<%= formData.studyPolicyName || '' %>"
+                placeholder="e.g., Employee Bursary Scheme" />
+              <p class="nm-hint">Name of the approved study/bursary policy.</p>
+            </div>
+            <div class="col-md-4">
+              <label class="nm-label">Registration Number</label>
+              <input type="text" name="studyPolicyRegNo" class="nm-input"
+                value="<%= formData.studyPolicyRegNo || '' %>"
+                placeholder="e.g., S-11111" />
+              <p class="nm-hint">Policy registration number from NamRA.</p>
+            </div>
+            <div class="col-md-3">
+              <label class="nm-label">Monthly Contribution (N$)</label>
+              <div class="nm-input-group">
+                <span class="nm-input-prefix">N$</span>
+                <input type="number" name="studyPolicyContribution" class="nm-input"
+                  placeholder="0.00" step="0.01" min="0"
+                  value="<%= formData.studyPolicyContribution || 0 %>">
+              </div>
+              <p class="nm-hint">Monthly amount — reduces taxable income before PAYE (s17, Income Tax Act).</p>
+            </div>
+
             <!-- Fringe Benefits -->
             <div class="col-12"><div style="font-size:0.75rem; font-weight:700; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:0.07em; padding-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.06);">Fringe Benefits</div></div>
 
@@ -328,23 +436,35 @@
               <label class="nm-label">Bank Name</label>
               <select name="bankName" class="nm-select">
                 <option value="" <%= !formData.bankName ? 'selected' : '' %>>— Select bank —</option>
-                <option value="First National Bank (FNB)"         <%= formData.bankName === 'First National Bank (FNB)'         ? 'selected' : '' %>>First National Bank (FNB)</option>
-                <option value="Standard Bank Namibia"             <%= formData.bankName === 'Standard Bank Namibia'             ? 'selected' : '' %>>Standard Bank Namibia</option>
-                <option value="Bank Windhoek"                     <%= formData.bankName === 'Bank Windhoek'                     ? 'selected' : '' %>>Bank Windhoek</option>
-                <option value="Nedbank Namibia"                   <%= formData.bankName === 'Nedbank Namibia'                   ? 'selected' : '' %>>Nedbank Namibia</option>
-                <option value="Letshego Bank Namibia"             <%= formData.bankName === 'Letshego Bank Namibia'             ? 'selected' : '' %>>Letshego Bank Namibia</option>
-                <option value="Development Bank of Namibia (DBN)" <%= formData.bankName === 'Development Bank of Namibia (DBN)' ? 'selected' : '' %>>Development Bank of Namibia (DBN)</option>
-                <option value="Other"                             <%= formData.bankName === 'Other'                             ? 'selected' : '' %>>Other</option>
+                <% 
+                  const banks = [
+                    "First National Bank (FNB)",
+                    "Standard Bank Namibia",
+                    "Bank Windhoek",
+                    "Nedbank Namibia",
+                    "Letshego Bank Namibia",
+                    "Development Bank of Namibia (DBN)",
+                    "Other"
+                  ];
+                %>
+                <% banks.forEach(bank => { %>
+                  <option value="<%= bank %>" <%= formData.bankName === bank ? 'selected' : '' %>>
+                    <%= bank %>
+                  </option>
+                <% }); %>
+                <% if (formData.bankName && !banks.includes(formData.bankName)) { %>
+                  <option value="<%= formData.bankName %>" selected><%= formData.bankName %></option>
+                <% } %>
               </select>
             </div>
 
             <div class="col-md-6">
               <label class="nm-label">Account Type</label>
               <select name="accountType" class="nm-select">
-                <option value=""            <%= !formData.accountType ? 'selected' : '' %>>— Select type —</option>
-                <option value="cheque"      <%= formData.accountType === 'cheque'      ? 'selected' : '' %>>Cheque / Current</option>
-                <option value="savings"     <%= formData.accountType === 'savings'     ? 'selected' : '' %>>Savings</option>
-                <option value="transmission"<%= formData.accountType === 'transmission'? 'selected' : '' %>>Transmission</option>
+                <option value="" <%= !formData.accountType ? 'selected' : '' %>>— Select type —</option>
+                <option value="cheque" <%= formData.accountType === 'cheque' ? 'selected' : '' %>>Cheque / Current</option>
+                <option value="savings" <%= formData.accountType === 'savings' ? 'selected' : '' %>>Savings</option>
+                <option value="transmission" <%= formData.accountType === 'transmission' ? 'selected' : '' %>>Transmission</option>
               </select>
             </div>
 

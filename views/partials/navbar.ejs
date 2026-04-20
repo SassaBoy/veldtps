@@ -74,7 +74,6 @@
             </li>
             <li><div class="nm-dropdown-sep"></div></li>
             <li><a href="/settings" class="nm-dd-item"><i class="bi bi-building"></i>Company Settings</a></li>
-            <!-- <li><a href="/settings" class="nm-dd-item"><i class="bi bi-person-circle"></i>My Profile</a></li> -->
             <li><div class="nm-dropdown-sep"></div></li>
             <li>
               <form action="/logout" method="POST">
@@ -91,13 +90,31 @@
 </nav>
 
 <script>
-  // Wait for the DOM and Bootstrap to be fully ready
+  // Hamburger ↔ Cross icon toggle
   document.addEventListener('DOMContentLoaded', function () {
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    const toggler = document.querySelector('.navbar-toggler');
+    
+    if (toggler) {
+      toggler.addEventListener('click', function () {
+        // Toggle between hamburger and cross icon
+        if (this.classList.contains('collapsed')) {
+          this.innerHTML = `
+            <span class="navbar-toggler-icon"></span>
+          `;
+        } else {
+          this.innerHTML = `
+            <i class="bi bi-x-lg" style="font-size: 1.6rem; color: #fff;"></i>
+          `;
+        }
+      });
+    }
+
+    // Bootstrap tooltip initialization
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl, {
-        trigger: 'hover' // Explicitly set trigger to hover
-      })
-    })
+        trigger: 'hover'
+      });
+    });
   });
 </script>
